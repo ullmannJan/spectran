@@ -1,4 +1,4 @@
-# Specky
+# Spectran
 
 A simple spectrum analyzer.
 
