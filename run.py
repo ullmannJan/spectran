@@ -1,0 +1,3 @@
+import specky
+
+specky.run()

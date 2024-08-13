@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spectran"
+description = "A tool to measure pictures with scale_bars"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+    'numpy',
+    'PySide6',
+    'pyopengl',
+    'pyqtgraph',
+    'pint',
+    'scipy',
+    'importlib-metadata; python_version<"3.11"',
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Utilities",
+]
+dynamic = ["version", "readme"]
+
+[project.urls]
+repository = "https://github.com/ullmannJan/measury"
+
+[tool.setuptools.dynamic]
+readme = { file = "README.md", content-type = "text/markdown" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+write_to = "src/measury/_version.py"
