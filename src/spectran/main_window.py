@@ -42,10 +42,10 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self.splitter)
 
-    def run(self):
+def run():
 
-        # This starts the application
-        app = QApplication(sys.argv)
-        w = MainWindow()
-        w.show()
-        app.exec()
+    # This starts the application
+    app = QApplication(sys.argv)
+    w = MainWindow()
+    w.show()
+    app.exec()

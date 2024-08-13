@@ -1,3 +1,4 @@
-import spectran
+from spectran import run
 
-spectran.run()
+if __name__ == "__main__":
+    run()

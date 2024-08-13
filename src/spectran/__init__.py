@@ -1,4 +1,4 @@
-from .main_window import MainWindow
+from .main_window import run
 
 try:
     from ._version import version as __version__
@@ -7,6 +7,5 @@ except ImportError:
     __version__ = "unknown version"
     version_tuple = (0, 0, "unknown version")
 
-def run():
-    main_window = MainWindow()
-    main_window.run()
+# def run():
+#     run()

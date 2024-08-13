@@ -56,14 +56,14 @@ class MainUI(QWidget):
 
         # Sample Frequency
         self.settings_layout.addWidget(QLabel("Sample Frequency: "), 2, 0)
-        self.sample_frequency_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["sample_frequency"]))
+        self.sample_frequency_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["sample_frequency_Hz"]*1e-3))
         self.sample_frequency_edit.setValidator(QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self))
         self.settings_layout.addWidget(self.sample_frequency_edit, 2, 1)
         self.settings_layout.addWidget(QLabel("kHz"), 2, 2)
 
         # Duration
         self.settings_layout.addWidget(QLabel("Duration: "), 3, 0)
-        self.duration_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["duration"]))
+        self.duration_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["duration_s"]))
         self.duration_edit.setValidator(QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self))
         self.settings_layout.addWidget(self.duration_edit, 3, 1)
         self.settings_layout.addWidget(QLabel("s"), 3, 2)
@@ -77,14 +77,14 @@ class MainUI(QWidget):
     def start_measurement(self):
 
         log.info("Starting Measurement")
-        
+
         config = self.get_config()
 
-        t = np.linspace(0, config['duration_s'], int(config['duration_s'] * config['fs_Hz']), endpoint=False)
+        t = np.linspace(0, config['duration_s'], int(config['duration_s'] * config['sample_frequency_Hz']), endpoint=False)
         # signal = np.sin(2 * np.pi * 100 * np.sqrt(t)) + 0.2*np.random.random(len(t)) # Frequency increases over time
         signal = np.sin(2*np.pi*50*t) + 0.5*np.sin(2*np.pi*120*t) + np.random.normal(0, 2, t.shape)
 
-        freq, psd = welch(signal, config['fs_Hz'])
+        freq, psd = welch(signal, config['sample_frequency_Hz'])
 
         self.main_window.plots.update_signal_plot(t, signal)
         self.main_window.plots.update_spectrum_plot(freq, psd)
