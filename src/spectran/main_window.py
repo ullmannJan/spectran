@@ -5,6 +5,12 @@ import sys
 
 from pint import UnitRegistry
 ureg = UnitRegistry()
+import logging
+log = logging.getLogger("spectran")
+logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s  %(levelname)-10s %(name)s: %(message)s",
+)
 
 from .plots import Plots
 from .main_ui import MainUI

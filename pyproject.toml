@@ -39,3 +39,8 @@ where = ["src"]
 
 [tool.setuptools_scm]
 write_to = "src/spectran/_version.py"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]

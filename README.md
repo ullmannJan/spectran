@@ -6,7 +6,7 @@ A simple spectrum analyzer.
 
 Install module into environment 
 
-    pip install -e . 
+    pip install -e .[dev]
 
 Run via
 

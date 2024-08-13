@@ -1,10 +1,16 @@
-from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget, QGroupBox, QLabel, QGridLayout, QLineEdit
+from PySide6.QtWidgets import (
+    QPushButton, QVBoxLayout, QWidget, 
+    QGroupBox, QLabel, QGridLayout, 
+    QLineEdit
+    )
+
 from PySide6.QtGui import QIntValidator, QRegularExpressionValidator
 
 from scipy.signal import periodogram, welch
 import numpy as np
 
 from .settings import DEFAULT_VALUES
+from .main_window import log
 
 
 class MainUI(QWidget):
@@ -70,6 +76,8 @@ class MainUI(QWidget):
 
     def start_measurement(self):
 
+        log.info("Starting Measurement")
+        
         config = self.get_config()
 
         t = np.linspace(0, config['duration_s'], int(config['duration_s'] * config['fs_Hz']), endpoint=False)
@@ -81,8 +89,6 @@ class MainUI(QWidget):
         self.main_window.plots.update_signal_plot(t, signal)
         self.main_window.plots.update_spectrum_plot(freq, psd)
         
-        print("Measurement started")
-
     def get_config(self):
         
         output = DEFAULT_VALUES.copy()
