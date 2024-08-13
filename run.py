@@ -1,3 +1,3 @@
-import specky
+import spectran
 
-specky.run()
+spectran.run()

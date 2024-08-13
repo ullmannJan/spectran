@@ -38,4 +38,4 @@ readme = { file = "README.md", content-type = "text/markdown" }
 where = ["src"]
 
 [tool.setuptools_scm]
-write_to = "src/measury/_version.py"
+write_to = "src/spectran/_version.py"
