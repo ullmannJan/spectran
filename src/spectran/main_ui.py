@@ -6,13 +6,10 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtGui import QIntValidator, QRegularExpressionValidator
 
-import threading
-from scipy.signal import periodogram, welch
-import numpy as np
-
 from .settings import DEFAULT_VALUES
-from .main_window import log
+from .main_window import log, ureg
 from .daq import DAQs, DAQ
+from . import measurement
 
 class MainUI(QWidget):
     
@@ -23,7 +20,8 @@ class MainUI(QWidget):
 
         self.main_window = main_window
 
-        self.setMinimumWidth(200)
+        self.setMinimumWidth(300)
+        self.setMaximumWidth(400)
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -87,16 +85,16 @@ class MainUI(QWidget):
         self.output_channel_edit.setValidator(QIntValidator(0, 99, self))
         self.settings_layout.addWidget(self.output_channel_edit, 1, 1)
 
-        # Sample Frequency
-        self.settings_layout.addWidget(QLabel("Sample Frequency: "), 2, 0)
-        self.sample_frequency_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["sample_frequency_Hz"]*1e-3))
-        self.sample_frequency_edit.setValidator(QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self))
-        self.settings_layout.addWidget(self.sample_frequency_edit, 2, 1)
+        # Sample Rate
+        self.settings_layout.addWidget(QLabel("Sample Rate: "), 2, 0)
+        self.sample_rate_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["sample_rate"]*1e-3))
+        self.sample_rate_edit.setValidator(QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self))
+        self.settings_layout.addWidget(self.sample_rate_edit, 2, 1)
         self.settings_layout.addWidget(QLabel("kHz"), 2, 2)
 
         # Duration
         self.settings_layout.addWidget(QLabel("Duration: "), 3, 0)
-        self.duration_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["duration_s"]))
+        self.duration_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["duration"]))
         self.duration_edit.setValidator(QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self))
         self.settings_layout.addWidget(self.duration_edit, 3, 1)
         self.settings_layout.addWidget(QLabel("s"), 3, 2)
@@ -104,25 +102,8 @@ class MainUI(QWidget):
         # Averages
         self.settings_layout.addWidget(QLabel("Averages: "), 4, 0)
         self.averages_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["averages"]))
-        self.sample_frequency_edit.setValidator(QRegularExpressionValidator(r"\d", self))
-        self.settings_layout.addWidget(self.averages_edit, 4, 1)
-
-    def start_measurement(self):
-
-        log.info("Starting Measurement")
-
-        config = self.get_config()
-        signal = []
-
-        t = np.linspace(0, config['duration_s'], int(config['duration_s'] * config['sample_frequency_Hz']), endpoint=False)
-        
-        measuremnent_thread = threading.Thread(target=self.driver_instance.get_sequence(t))
-        measuremnent_thread.start()
-        
-        freq, psd = welch(signal, config['sample_frequency_Hz'])
-
-        self.main_window.plots.update_signal_plot(t, signal)
-        self.main_window.plots.update_spectrum_plot(freq, psd)
+        self.sample_rate_edit.setValidator(QRegularExpressionValidator(r"\d", self))
+        self.settings_layout.addWidget(self.averages_edit, 4, 1)        
         
     def get_config(self):
         
@@ -131,14 +112,27 @@ class MainUI(QWidget):
             output["input_channel"] = int(self.input_channel_edit.text())
         if self.output_channel_edit.text():
             output["output_channel"] = int(self.output_channel_edit.text())
-        if self.sample_frequency_edit.text():
-            output["sample_frequency"] = float(self.sample_frequency_edit.text())
+        if self.sample_rate_edit.text():
+            output["sample_rate"] = float(self.sample_rate_edit.text()) * ureg.kHz
         if self.duration_edit.text():
-            output["duration"] = float(self.duration_edit.text())
+            output["duration"] = float(self.duration_edit.text()) * ureg.second
         if self.averages_edit.text():
             output["averages"] = int(self.duration_edit.text())
 
         return output
+    
+    def start_measurement(self):
+        
+        if self.driver_instance is None:
+            self.main_window.raise_error("No driver selected")
+            return
+        if self.driver_instance.connected_device is None:
+            self.main_window.raise_error("No device connected")
+            return
+        
+        measurement.start_measurement(self.driver_instance, 
+                                      self.get_config(), 
+                                      self.main_window.plots)
     
     def list_devices(self):
         log.info("Looking for devices")
@@ -150,9 +144,9 @@ class MainUI(QWidget):
         self.driver_instance = DAQs[self.driver_dd.currentIndex()]()
         self.driver_instance.connect_device(self.device_dd.currentText())
         # change Text
-        if self.driver_instance.get_connected_device() is None:
+        if self.driver_instance.connected_device is None:
             self.driver_gbox.setTitle("Connected")
         else:
-            self.driver_gbox.setTitle(f"Connected to {self.driver_instance.__class__.__name__}/{self.driver_instance.get_connected_device()}")
+            self.driver_gbox.setTitle(f"Connected to {self.driver_instance.__class__.__name__}/{self.driver_instance.connected_device}")
         
-        log.info(f"Connected to {self.driver_instance.get_connected_device()}")
+        log.info(f"Connected to {self.driver_instance.connected_device}")

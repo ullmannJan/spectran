@@ -17,14 +17,6 @@ class DAQ(ABC):
             list[str]: list of names of devices
         """
     
-    def get_connected_device(self) -> str:
-        """Get the name of the connected device
-
-        Returns:
-            str: name of the connected device
-        """
-        return self.connected_device
-    
     def connect_device(self, resource_name):
         """Connect to the device
 
