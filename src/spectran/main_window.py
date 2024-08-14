@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (QApplication, QMainWindow, 
 QHBoxLayout, QWidget, QSplitter, QStyle, QMessageBox)
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThreadPool
 from PySide6.QtGui import QIcon, QAction
 import sys
 
@@ -15,6 +15,7 @@ logging.basicConfig(
 
 from .plots import Plots
 from .main_ui import MainUI
+from .data_handler import DataHandler
 
 
 class MainWindow(QMainWindow):
@@ -24,6 +25,8 @@ class MainWindow(QMainWindow):
 
         self.plots = Plots(self)
         self.main_ui = MainUI(self)
+        self.data_handler = DataHandler(self)
+        self.threadpool = QThreadPool()
         self.initUI()
 
     def initUI(self):
