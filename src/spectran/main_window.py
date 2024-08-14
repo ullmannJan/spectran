@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget, QSplitter, QStyle
+from PySide6.QtWidgets import (QApplication, QMainWindow, 
+QHBoxLayout, QWidget, QSplitter, QStyle, QMessageBox)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QAction
 import sys
@@ -67,11 +68,39 @@ class MainWindow(QMainWindow):
         
     def save_data(self):
         raise NotImplementedError("Save data not implemented yet")
+    
+    def closeEvent(self, event):
+        QApplication.closeAllWindows()
 
+    def raise_error(self, error):
+        log.error(str(error).replace("\n", " "))
+        if "pytest" in sys.modules:
+            raise Exception(error)
+        else:
+            QMessageBox.critical(self, "Error", str(error))
+
+    def exception_hook(self, exception_type, exception_value: Exception, traceback):
+        """
+        Exception hook for the application.
+
+        Args:
+            exception_type (type): Type of the exception.
+            exception_value (Exception): The exception.
+            traceback (traceback): The traceback of the exception.
+        """
+        # Print the error message to stderr
+        print(f"Unhandled exception: {exception_value}")
+
+        # Display an error message box
+        self.raise_error(exception_value)
+        sys.__excepthook__(exception_type, exception_value, traceback)
+        
 def run():
 
     # This starts the application
     app = QApplication(sys.argv)
     w = MainWindow()
+    sys.excepthook = w.exception_hook
     w.show()
     app.exec()
+    

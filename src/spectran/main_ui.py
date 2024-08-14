@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtGui import QIntValidator, QRegularExpressionValidator
 
+import threading
 from scipy.signal import periodogram, welch
 import numpy as np
 
@@ -111,10 +112,13 @@ class MainUI(QWidget):
         log.info("Starting Measurement")
 
         config = self.get_config()
+        signal = []
 
         t = np.linspace(0, config['duration_s'], int(config['duration_s'] * config['sample_frequency_Hz']), endpoint=False)
-        signal = self.driver_instance.get_sequence(t)
-
+        
+        measuremnent_thread = threading.Thread(target=self.driver_instance.get_sequence(t))
+        measuremnent_thread.start()
+        
         freq, psd = welch(signal, config['sample_frequency_Hz'])
 
         self.main_window.plots.update_signal_plot(t, signal)
