@@ -26,7 +26,8 @@ class MainWindow(QMainWindow):
         self.plots = Plots(self)
         self.main_ui = MainUI(self)
         self.data_handler = DataHandler(self)
-        self.threadpool = QThreadPool()
+        self.threadpool = QThreadPool.globalInstance()
+        log.info("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
         self.initUI()
 
     def initUI(self):
@@ -73,6 +74,9 @@ class MainWindow(QMainWindow):
         raise NotImplementedError("Save data not implemented yet")
     
     def closeEvent(self, event):
+        # close all threads
+        self.threadpool.clear() # this simply raises an error when closing unexpectedly
+        
         QApplication.closeAllWindows()
 
     def raise_error(self, error):
@@ -91,9 +95,6 @@ class MainWindow(QMainWindow):
             exception_value (Exception): The exception.
             traceback (traceback): The traceback of the exception.
         """
-        # Print the error message to stderr
-        print(f"Unhandled exception: {exception_value}")
-
         # Display an error message box
         self.raise_error(exception_value)
         sys.__excepthook__(exception_type, exception_value, traceback)

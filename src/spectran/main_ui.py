@@ -37,6 +37,11 @@ class MainUI(QWidget):
         self.add_settings_box()
 
         self.layout.addStretch()
+        
+        self.stop_button = QPushButton("Stop Measurement")
+        self.stop_button.clicked.connect(self.stop_measurement)
+        self.stop_button.setEnabled(False)
+        self.layout.addWidget(self.stop_button)
 
         self.start_button = QPushButton("Start Measurement")
         self.start_button.clicked.connect(self.start_measurement)
@@ -132,8 +137,16 @@ class MainUI(QWidget):
             output["duration"] = float(self.duration_edit.text()) * ureg.second
         if self.averages_edit.text():
             output["averages"] = int(self.averages_edit.text())
+        if self.driver_instance is not None:
+            output["driver"] = self.driver_instance.__class__.__name__
+        if self.driver_instance.connected_device is not None:
+            output["device"] = self.driver_instance.connected_device
 
         return output
+    
+    def stop_measurement(self):
+        self.main_window.threadpool.clear()
+        self.start_button.setEnabled(True)
 
     def start_measurement(self):
 
@@ -148,24 +161,31 @@ class MainUI(QWidget):
         self.main_window.data_handler.config = config
         
         self.start_button.setEnabled(False)
-        self.worker = Worker(run_measurement, self.driver_instance, config)
-        self.worker.signals.finished.connect(
+        self.stop_button.setEnabled(True)
+        worker = Worker(run_measurement, self.driver_instance, config)
+        worker.signals.finished.connect(
             lambda: self.start_button.setEnabled(True)
             )
-        self.worker.signals.progress.connect(self.get_data_and_plot)
-        self.worker.signals.finished.connect(
+        worker.signals.finished.connect(
+            lambda: self.stop_button.setEnabled(False)
+            )
+        worker.signals.progress.connect(self.get_data_and_plot)
+        worker.signals.finished.connect(
             lambda: log.info("Measurement finished")
             )
+        worker.signals.result.connect(self.get_data_and_plot)
 
         # Execute
-        self.main_window.threadpool.start(self.worker)
-
+        self.main_window.threadpool.start(worker)
+        
     def get_data_and_plot(self, data):
-        self.main_window.data_handler.voltage_data = data
-        self.main_window.plots.update_plots()
+        # log.info("Getting data and plotting")
+        plot_worker = Worker(self.main_window.data_handler.calculate_data, data)
+        plot_worker.signals.finished.connect(self.main_window.plots.update_plots)
+        self.main_window.threadpool.start(plot_worker)
 
     def list_devices(self):
-        log.info("Looking for devices")
+        log.info(f"Looking for devices on {self.driver_dd.currentText()}")
         driver_instance = DAQs[self.driver_dd.currentIndex()]()
         self.device_dd.clear()
         self.device_dd.addItems(driver_instance.list_devices())

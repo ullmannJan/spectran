@@ -18,8 +18,10 @@ def run_measurement(driver_instance:DAQ, config:dict, progress_callback:Signal):
 
     driver_instance.get_sequence(
         voltage_data, 
-        duration, sample_rate, config["averages"], 
+        config, 
         plotting_signal=progress_callback)
+    
+    return voltage_data
 
 
 class WorkerSignals(QObject):

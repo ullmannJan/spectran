@@ -1,9 +1,11 @@
 """This module contains all functionality regarding communication with the DAQ device.
 """
 
-from ..main_window import log
+from ..main_window import log, ureg
 
 from abc import ABC, abstractmethod
+import numpy as np
+from PySide6.QtCore import Signal, QThread
 
 class DAQ(ABC):
     
@@ -27,18 +29,20 @@ class DAQ(ABC):
         return self.connected_device
     
     @abstractmethod
-    def get_sequence(self, channels, options, length, voltage):
-        """Get a sequence of data from the device
+    def get_sequence(self, data_holder:np.ndarray, 
+                     config:dict,
+                     plotting_signal:Signal) -> np.ndarray:
+        """Get data from DAQ device
 
         Args:
-            resource_name (str): device to connect to
-            channels (_type_): _description_
-            options (_type_): _description_
-            length (float): time in seconds
-            voltage (_type_): _description_
-        """
+            data_holder (np.ndarray): array to store data
+            config (dict): configuration dictionary
+            plotting_signal (Signal): signal to emit when to plot. 
+                    This is filled automatically by the Worker class 
 
-import numpy as np
+        Returns:
+            np.ndarray: data_holder with data
+        """
 import time
 class DummyDAQ(DAQ):
      
@@ -46,22 +50,31 @@ class DummyDAQ(DAQ):
         return ["Dev1", "Dev2", "Dev3"]
     
     def get_sequence(self, data_holder:np.ndarray, 
-                     duration:float, 
-                     sample_rate:float, 
-                     averages:int,
-                     plotting_signal) -> np.ndarray:
+                     config:dict,
+                     plotting_signal:Signal) -> np.ndarray:
         
+        duration = config["duration"].to(ureg.second).magnitude
+        sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
+        averages = config["averages"]
+        device = config["device"]
+        log.info(f"Getting sequence from {device} for {duration} s at {sample_rate} kHz")
+        
+        old_time = time.time()
         for i in range(averages):
-            print(f"Acquiring data {i+1}/{averages}")
             data_holder[i] = self.acquire(duration, sample_rate)
-            plotting_signal.emit(data_holder)
+            if i % 1 == 0:
+                log.info(f"Emitting at {i+1}/{averages} - {(time.time()-old_time)*1e3:.2f} ms")
+                plotting_signal.emit(data_holder)
+            else:
+                log.info(f"Updating at {i+1}/{averages} - {(time.time()-old_time)*1e3:.2f} ms")
+            old_time = time.time()
 
         return data_holder
             
         
     def acquire(self, duration, sample_rate) -> np.ndarray:
         
-        # time.sleep(duration)
+        time.sleep(0.2)
         t = np.linspace(0, duration, int(duration * sample_rate))
         s = np.sin(2*np.pi*35_000*t) + 0.5*np.sin(2*np.pi*12_000*t) + 0.1*np.random.normal(0, 2, t.shape)
         return s
