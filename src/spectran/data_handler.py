@@ -2,6 +2,8 @@
 from .main_window import log, ureg
 from scipy.signal import welch
 import numpy as np 
+from PySide6.QtWidgets import QFileDialog
+from pathlib import Path
 
 class DataHandler():
 
@@ -41,3 +43,24 @@ class DataHandler():
         self.voltage_data = data
         self.data_has_changed = True
         self.calculate_psd()
+
+    def save_file(self):
+        
+        filename = self.save_file_dialog()
+        if filename is None:
+            return
+        
+        self.file_path = Path(filename)
+
+        raise NotImplementedError("Saving data not implemented yet")
+
+    
+    def save_file_dialog(
+        self, file_name="output.dat", extensions="Data-File (*.dat *.txt);;All Files (*)"
+    ):
+        filename, _ = QFileDialog.getSaveFileName(
+            self.main_window.main_ui, "Save", file_name, extensions
+        )
+        if filename:
+            return filename
+        

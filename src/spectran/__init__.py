@@ -1,4 +1,5 @@
-from .main_window import run
+from pathlib import Path
+spectran_path = Path(__file__).parent
 
 try:
     from ._version import version as __version__
@@ -7,5 +8,4 @@ except ImportError:
     __version__ = "unknown version"
     version_tuple = (0, 0, "unknown version")
 
-# def run():
-#     run()
+from .app import run

@@ -1,3 +1,5 @@
+""""This module contains the main UI class for the Spectran application."""
+
 from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
