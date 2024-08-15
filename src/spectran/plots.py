@@ -27,7 +27,7 @@ class Plots(pg.GraphicsLayoutWidget):
             data = self.main_window.data_handler.voltage_data
 
             self.update_signal_plot(self.main_window.data_handler.time_seq, 
-                                    np.mean(data, axis=0))
+                                    data[-1])
             self.update_spectrum_plot(self.main_window.data_handler.frequencies, 
                                     self.main_window.data_handler.psd)
         

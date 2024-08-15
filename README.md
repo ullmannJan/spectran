@@ -1,12 +1,8 @@
 # Spectran
 
-A simple spectrum analyzer.
+![Spectran Logo](./src/spectran/data/osci_128.ico)
 
-# Development
-
-Install module into environment 
-
-    pip install -e .[dev]
+A simple spectrum analyzer. Read a voltage signal and do a spectral analysis.
 
 Run via
 
@@ -16,3 +12,10 @@ Run via
 or in terminal 
 
     python -m spectran
+
+
+# Development
+
+Install module into environment 
+
+    pip install -e .[dev]

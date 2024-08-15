@@ -5,7 +5,7 @@ Everything displayed in the GUI is managed by .main_ui.py and .plots.py."""
 from PySide6.QtWidgets import (QApplication, QMainWindow, 
 QHBoxLayout, QWidget, QSplitter, QStyle, QMessageBox)
 from PySide6.QtCore import Qt, QThreadPool
-from PySide6.QtGui import QIcon, QAction, QUndoStack, QPalette
+from PySide6.QtGui import QIcon, QAction, QPalette
 import sys
 
 from pint import UnitRegistry
@@ -35,7 +35,6 @@ class MainWindow(QMainWindow):
         self.data_handler = DataHandler(self)
 
         # qt stuff
-        self.undo_stack = QUndoStack(self)
         self.threadpool = QThreadPool.globalInstance()
         log.info("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
         self.settings = Settings(self, "spectran", "Spectran")
@@ -48,7 +47,7 @@ class MainWindow(QMainWindow):
     def initUI(self):
         self.setWindowTitle("Spectrum Analyzer")
         self.setMinimumSize(800, 600)
-        self.setWindowIcon(QIcon("icon.png"))
+        self.setWindowIcon(QIcon(str(spectran_path / "data/osci_128.ico")))
 
         self.add_menu_bar()
 
@@ -162,7 +161,5 @@ class MainWindow(QMainWindow):
         if not app:  # If the application does not exist, create a new instance
             app = QApplication([])
         return app.palette().color(QPalette.ColorRole.Window).lightness() < 128
-    
-    def reset_undo_stack(self):
-        self.undo_stack.clear()
+
     

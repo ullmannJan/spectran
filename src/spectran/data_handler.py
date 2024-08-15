@@ -1,6 +1,6 @@
 """This class should contain all data related functionality."""
 from .main_window import log, ureg
-from scipy.signal import welch
+from scipy.signal import welch, periodogram
 import numpy as np 
 from PySide6.QtWidgets import QFileDialog
 from pathlib import Path
@@ -35,6 +35,7 @@ class DataHandler():
         
             self.frequencies, self.psd = welch(np.mean(self.voltage_data, axis=0), 
                 fs=self._config["sample_rate"].to(ureg.kHz).magnitude)
+            # self.frequencies, self.psd = periodogram(np.mean(self.voltage_data, axis=0), fs=self._config["sample_rate"].to(ureg.kHz).magnitude)
             log.debug("PSD calculated")
             
             return self.frequencies, self.psd

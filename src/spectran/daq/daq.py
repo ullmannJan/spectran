@@ -57,7 +57,7 @@ class DummyDAQ(DAQ):
         sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
         averages = config["averages"]
         device = config["device"]
-        log.info(f"Getting sequence from {device} for {duration} s at {sample_rate} kHz")
+        log.info(f"Getting sequence from {device} for {duration} s at {sample_rate} Hz")
         
         old_time = time.time()
         for i in range(averages):
@@ -74,7 +74,10 @@ class DummyDAQ(DAQ):
         
     def acquire(self, duration, sample_rate) -> np.ndarray:
         
-        time.sleep(0.2)
         t = np.linspace(0, duration, int(duration * sample_rate))
-        s = np.sin(2*np.pi*35_000*t) + 0.5*np.sin(2*np.pi*12_000*t) + 0.1*np.random.normal(0, 2, t.shape)
+        rand = 1e6 * np.sort(np.random.random(200))
+        decrease = np.logspace(10, 0.1, 200)
+        s = np.random.normal(0, 0.1, len(t))
+        s += np.sum(decrease[:, np.newaxis] * np.sin(2 * np.pi * rand[:, np.newaxis] * t), axis=0)
+       
         return s

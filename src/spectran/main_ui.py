@@ -148,6 +148,7 @@ class MainUI(QWidget):
     
     def stop_measurement(self):
         self.main_window.threadpool.clear()
+        self.stop_button.setEnabled(False)
         self.start_button.setEnabled(True)
 
     def start_measurement(self):

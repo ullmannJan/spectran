@@ -38,7 +38,7 @@ class Window(QWidget):
         self.setLayout(self.layout)
 
         self.setWindowTitle(f"Spectran: {title}")
-        self.setWindowIcon(QIcon(str(spectran_path / "data/tape_measure_128.ico")))
+        self.setWindowIcon(QIcon(str(spectran_path / "data/osci_128.ico")))
         self.setMinimumSize(300, 200)
 
     def closeEvent(self, event):
@@ -141,10 +141,6 @@ class SettingsWindow(Window):
 
         self.misc_layout = QVBoxLayout()
         self.misc.setLayout(self.misc_layout)
-
-        self.clearUndoHistButton = QPushButton("Clear Undo History", self)
-        self.clearUndoHistButton.clicked.connect(self.parent.reset_undo_stack)
-        self.misc_layout.addWidget(self.clearUndoHistButton)
 
         self.file_extensions_layout = QHBoxLayout()
         self.file_extensions_label = QLabel("File Extensions", self)

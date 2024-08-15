@@ -4,8 +4,15 @@ from PySide6.QtWidgets import QApplication
 import warnings
 import sys
 from .main_window import MainWindow
+from . import __version__
 
 def run():
+
+    # bug fix for windows where icon is not displayed
+    if "win" in sys.platform:
+        import ctypes
+        myappid = f'pit.spectran.app.{__version__}' # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     # This starts the application
     app = QApplication(sys.argv)
