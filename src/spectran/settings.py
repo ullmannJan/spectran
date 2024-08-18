@@ -6,7 +6,8 @@ DEFAULT_VALUES = {
     "input_channel": 0,
     "sample_rate": 100000 * ureg.Hz,
     "duration": 2 * ureg.second,
-    "averages": 1
+    "averages": 1,
+    "unit": "Volt",
 }
 
 DEFAULT_SETTINGS = {

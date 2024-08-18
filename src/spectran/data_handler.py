@@ -52,8 +52,23 @@ class DataHandler():
             return
         
         self.file_path = Path(filename)
+        header_text = (f"Measurement with Driver:{self._config['driver']} on Device:{self._config['device']}\n"
+            + f"Date: {self._config['start_time']}\n"
+            + f"Input Channel: {self._config['input_channel']}\n"
+            + f"Duration: {self._config['duration']}\n"
+            + f"Sample Rate: {self._config['sample_rate']}\n"
+            + f"Averages: {self._config['averages']}\n"
+            + f"Unit for Data: {self._config['unit']}\n")
 
-        raise NotImplementedError("Saving data not implemented yet")
+        np.savetxt(self.file_path, self.voltage_data.T, 
+                   delimiter="\t",
+                   header=header_text)
+        
+        # self.main_window.statusBar().showMessage(f"Data saved to {self.file_path}")
+        log.info(f"Data saved to {self.file_path}")
+        self.main_window.save_window.close()
+
+        # raise NotImplementedError("Saving data not implemented yet")
 
     
     def save_file_dialog(

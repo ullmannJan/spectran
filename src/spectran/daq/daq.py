@@ -30,12 +30,14 @@ class DAQ(ABC):
     
     @abstractmethod
     def get_sequence(self, data_holder:np.ndarray, 
+                     index:int,
                      config:dict,
                      plotting_signal:Signal) -> np.ndarray:
         """Get data from DAQ device
 
         Args:
             data_holder (np.ndarray): array to store data
+            index (int): index of average
             config (dict): configuration dictionary
             plotting_signal (Signal): signal to emit when to plot. 
                     This is filled automatically by the Worker class 

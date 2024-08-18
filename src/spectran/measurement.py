@@ -1,7 +1,11 @@
+"""This module contains a function to run the measurement. 
+But also the Worker class to run the measurement in a separate thread."""
+
 from .main_window import log, ureg
 from .daq import DAQ
 import numpy as np
 from PySide6.QtCore import Signal, Slot, QObject
+from datetime import datetime
 
 def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_callback:Signal):
     """
@@ -12,6 +16,7 @@ def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_call
     
     duration = config["duration"].to(ureg.second).magnitude
     sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
+    config["start_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     device = config["device"]
     log.info(f"Getting sequence from {device} for {duration} s at {sample_rate} Hz")
     
