@@ -3,7 +3,7 @@ from .daq import DAQ
 import numpy as np
 from PySide6.QtCore import Signal, Slot, QObject
 
-def run_measurement(driver_instance:DAQ, config:dict, progress_callback:Signal):
+def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_callback:Signal):
     """
     Start a measurement with the current configuration
     and writes into voltage_data inplace.
@@ -12,14 +12,28 @@ def run_measurement(driver_instance:DAQ, config:dict, progress_callback:Signal):
     
     duration = config["duration"].to(ureg.second).magnitude
     sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
+    device = config["device"]
+    log.info(f"Getting sequence from {device} for {duration} s at {sample_rate} Hz")
     
     # create space for data
     voltage_data = np.empty((config["averages"], int(duration * sample_rate)))
 
-    driver_instance.get_sequence(
-        voltage_data, 
-        config, 
-        plotting_signal=progress_callback)
+    for i in range(config["averages"]):
+        if main_window.stopped:
+            log.info("Measurement stopped")
+            # return the data that has been measured
+            return voltage_data[:i]
+        
+        driver_instance.get_sequence(
+            voltage_data,
+            i,
+            config,
+            plotting_signal=progress_callback)
+        
+    # driver_instance.get_sequence(
+    #     voltage_data, 
+    #     config, 
+    #     plotting_signal=progress_callback)
     
     return voltage_data
 

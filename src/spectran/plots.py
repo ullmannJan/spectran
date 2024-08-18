@@ -1,6 +1,5 @@
 import pyqtgraph as pg
 import numpy as np
-from PySide6.QtWidgets import QApplication
 from .main_window import log, ureg
 
 class Plots(pg.GraphicsLayoutWidget):
@@ -27,7 +26,7 @@ class Plots(pg.GraphicsLayoutWidget):
             data = self.main_window.data_handler.voltage_data
 
             self.update_signal_plot(self.main_window.data_handler.time_seq, 
-                                    data[-1])
+                                    np.mean(data, axis=0))
             self.update_spectrum_plot(self.main_window.data_handler.frequencies, 
                                     self.main_window.data_handler.psd)
         

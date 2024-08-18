@@ -148,6 +148,7 @@ class MainUI(QWidget):
     
     def stop_measurement(self):
         self.main_window.threadpool.clear()
+        self.main_window.stopped = True
         self.stop_button.setEnabled(False)
         self.start_button.setEnabled(True)
 
@@ -160,26 +161,29 @@ class MainUI(QWidget):
             self.main_window.raise_error("No device connected")
             return
         
+        self.main_window.stopped = False
+        
         config = self.get_config()
         self.main_window.data_handler.config = config
         
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
-        worker = Worker(run_measurement, self.driver_instance, config)
-        worker.signals.finished.connect(
-            lambda: self.start_button.setEnabled(True)
-            )
-        worker.signals.finished.connect(
-            lambda: self.stop_button.setEnabled(False)
-            )
+        worker = Worker(run_measurement, self.driver_instance, config, self.main_window)
         worker.signals.progress.connect(self.get_data_and_plot)
-        worker.signals.finished.connect(
-            lambda: log.info("Measurement finished")
-            )
+        worker.signals.finished.connect(self.finish_measurement)
+        
         worker.signals.result.connect(self.get_data_and_plot)
 
         # Execute
         self.main_window.threadpool.start(worker)
+
+    def finish_measurement(self):
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+        self.main_window.stopped = True
+
+        # Open a window that shows that measurement is completed
+        self.main_window.raise_info("Measurement finished")
         
     def get_data_and_plot(self, data):
         # log.info("Getting data and plotting")

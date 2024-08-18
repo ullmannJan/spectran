@@ -26,6 +26,8 @@ from . import spectran_path
 
 class MainWindow(QMainWindow):
 
+    stopped = True # The status of the measurement
+
     def __init__(self):
         super(MainWindow, self).__init__()
 
@@ -132,6 +134,10 @@ class MainWindow(QMainWindow):
             raise Exception(error)
         else:
             QMessageBox.critical(self, "Error", str(error))
+
+    def raise_info(self, error):
+        log.info(str(error).replace("\n", " "))
+        QMessageBox.information(self, "Info", str(error))
 
     def open_about_page(self):
         self.about_window = AboutWindow(parent=self)
