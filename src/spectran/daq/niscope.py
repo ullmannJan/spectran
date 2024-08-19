@@ -12,6 +12,7 @@ class NISCOPE(DAQ):
         return niscope.Session.list_resources()
     
     def get_sequence(self, data_holder:np.ndarray, 
+                     average_index: int,
                      config:dict,
                      plotting_signal:Signal) -> np.ndarray:
         
@@ -34,5 +35,6 @@ class NISCOPE(DAQ):
                 print(f'Waveform {i} information:')
                 print(f'{waveforms[i]}\n\n')
                 print(f'Samples: {waveforms[i].samples.tolist()}')
-            
+                
+                data_holder[i] = waveforms[i].samples
         plotting_signal.emit(data_holder)

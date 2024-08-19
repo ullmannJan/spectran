@@ -30,14 +30,14 @@ class DAQ(ABC):
     
     @abstractmethod
     def get_sequence(self, data_holder:np.ndarray, 
-                     index:int,
+                     average_index:int,
                      config:dict,
                      plotting_signal:Signal) -> np.ndarray:
         """Get data from DAQ device
 
         Args:
             data_holder (np.ndarray): array to store data
-            index (int): index of average
+            average_index (int): index of average
             config (dict): configuration dictionary
             plotting_signal (Signal): signal to emit when to plot. 
                     This is filled automatically by the Worker class 
@@ -52,7 +52,7 @@ class DummyDAQ(DAQ):
         return ["Dev1", "Dev2", "Dev3"]
     
     def get_sequence(self, data_holder:np.ndarray,
-                     index:int, 
+                     average_index:int, 
                      config:dict,
                      plotting_signal:Signal):
         
@@ -62,12 +62,12 @@ class DummyDAQ(DAQ):
         
         start_time = time.time()
         # this is where the data is acquired
-        data_holder[index] = self.acquire(duration, sample_rate)
-        if index % 1 == 0:
-            log.info(f"Emit at {index+1}/{averages} - {(time.time()-start_time)*1e3:.2f} ms")
+        data_holder[average_index] = self.acquire(duration, sample_rate)
+        if average_index % 1 == 0:
+            log.info(f"Emit at {average_index+1}/{averages} - {(time.time()-start_time)*1e3:.2f} ms")
             plotting_signal.emit(data_holder)
         else:
-            log.info(f"Updating at {index+1}/{averages} - {(time.time()-start_time)*1e3:.2f} ms")
+            log.info(f"Updating at {average_index+1}/{averages} - {(time.time()-start_time)*1e3:.2f} ms")
 
         
     def acquire(self, duration, sample_rate) -> np.ndarray:

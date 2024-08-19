@@ -15,7 +15,7 @@ class Plots(pg.GraphicsLayoutWidget):
         self.plot1.setLabel('left', 'Amplitude', units='V')
         self.plot1.setLabel('bottom', 'Time', units='s')
         self.plot2.setLabel('left', 'PSD', units='V^2/Hz')
-        self.plot2.setLabel('bottom', 'Frequency', units='kHz')
+        self.plot2.setLabel('bottom', 'Frequency', units='Hz')
         self.plot2.setLogMode(x=False, y=True)
 
     def update_plots(self):

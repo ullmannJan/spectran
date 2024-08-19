@@ -34,7 +34,7 @@ class DataHandler():
     def calculate_psd(self):
         
             self.frequencies, self.psd = welch(np.mean(self.voltage_data, axis=0), 
-                fs=self._config["sample_rate"].to(ureg.kHz).magnitude)
+                fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
             # self.frequencies, self.psd = periodogram(np.mean(self.voltage_data, axis=0), fs=self._config["sample_rate"].to(ureg.kHz).magnitude)
             log.debug("PSD calculated")
             
