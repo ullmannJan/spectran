@@ -2,14 +2,23 @@ from .daq import DAQ
 import niscope
 import numpy as np
 from PySide6.QtCore import Signal
-import time
+import nisyscfg
 from ..main_window import log, ureg
 
 class NISCOPE(DAQ):
     
     def list_devices(self) -> list[str]:
-        return []
-        return niscope.Session.list_resources()
+        output = []
+        with nisyscfg.Session() as session:
+            # Print user aliases for all National Instruments devices in the local system
+            filter = session.create_filter()
+            filter.is_present = True
+            filter.is_ni_product = True
+            filter.is_device = True
+            for resource in session.find_hardware(filter):
+                output.append(resource.expert_user_alias[0])
+
+        return output
     
     def get_sequence(self, data_holder:np.ndarray, 
                      average_index: int,
