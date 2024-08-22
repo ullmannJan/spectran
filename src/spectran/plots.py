@@ -41,3 +41,7 @@ class Plots(pg.GraphicsLayoutWidget):
         self.plot2.clear()
         # plot the new data
         self.plot2.plot(x, y)
+        
+    def clear_plots(self):
+        self.plot1.clear()
+        self.plot2.clear()

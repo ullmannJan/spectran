@@ -45,9 +45,10 @@ class DataHandler():
             return self.frequencies, self.psd
         
     def calculate_data(self, data, index, progress_callback):
-        self.voltage_data = data
-        self.data_has_changed = True
-        self.calculate_psd(index)
+        if data is not None:
+            self.voltage_data = data
+            self.data_has_changed = True
+            self.calculate_psd(index)
 
     def save_file(self):
         

@@ -4,7 +4,7 @@ Everything displayed in the GUI is managed by .main_ui.py and .plots.py."""
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, 
 QHBoxLayout, QWidget, QSplitter, QStyle, QMessageBox)
-from PySide6.QtCore import Qt, QThreadPool
+from PySide6.QtCore import Qt, QThreadPool, QMetaObject, Q_ARG, Slot
 from PySide6.QtGui import QIcon, QAction, QPalette
 import sys
 
@@ -120,11 +120,19 @@ class MainWindow(QMainWindow):
         QApplication.closeAllWindows()
 
     def raise_error(self, error):
+        if isinstance(error, tuple):
+            # when it is raised from a worker thread
+            error = error[1]
+            
         log.error(str(error).replace("\n", " "))
         if "pytest" in sys.modules:
             raise Exception(error)
         else:
-            QMessageBox.critical(self, "Error", str(error))
+            QMetaObject.invokeMethod(self, "show_critical_message", 
+                                     Qt.ConnectionType.QueuedConnection, Q_ARG(str, str(error)))
+    @Slot(str)
+    def show_critical_message(self, error_message):
+        QMessageBox.critical(self, "Error", error_message)
 
     def raise_info(self, error):
         log.info(str(error).replace("\n", " "))

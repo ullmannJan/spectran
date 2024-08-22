@@ -32,17 +32,13 @@ def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_call
             # return the data that has been measured
             return voltage_data[:i]
         
+        # normal operation
         main_window.statusBar().showMessage(f"Measurement in progress ({i+1} / {averages})")
         driver_instance.get_sequence(
             voltage_data,
             i,
             config,
             plotting_signal=progress_callback)
-        
-    # driver_instance.get_sequence(
-    #     voltage_data, 
-    #     config, 
-    #     plotting_signal=progress_callback)
     
     return voltage_data
 

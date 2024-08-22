@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from PySide6.QtGui import QRegularExpressionValidator
+import numpy as np
 
 from . import log, ureg
 from .settings import DEFAULT_VALUES
@@ -163,6 +164,7 @@ class MainUI(QWidget):
             return
         
         self.main_window.stopped = False
+        self.main_window.plots.clear_plots()
         
         config = self.get_config()
         self.main_window.data_handler.config = config
@@ -171,6 +173,7 @@ class MainUI(QWidget):
         self.stop_button.setEnabled(True)
         worker = Worker(run_measurement, self.driver_instance, config, self.main_window)
         worker.signals.progress.connect(self.get_data_and_plot)
+        worker.signals.error.connect(self.main_window.raise_error)
         worker.signals.finished.connect(self.finish_measurement)
         
         worker.signals.result.connect(lambda data: self.get_data_and_plot(None, data))
@@ -187,9 +190,17 @@ class MainUI(QWidget):
         if self.main_window.statusBar().currentMessage() != "Measurement aborted":
             self.main_window.statusBar().showMessage("Ready for measurement")
         
-    def get_data_and_plot(self, index, data):
+    def get_data_and_plot(self, index:int, data:np.ndarray):
+        """Collects data and calculates the PSD. Then plots it.
+        Computations are done in a separate thread.
+        
+        Args:
+            index (int): index of averages that was just collected
+            data (np.ndarray): array holding the voltage values
+        """
         plot_worker = Worker(self.main_window.data_handler.calculate_data, data, index)
         plot_worker.signals.finished.connect(self.main_window.plots.update_plots)
+        plot_worker.signals.error.connect(self.main_window.raise_error)
         self.main_window.threadpool.start(plot_worker)
 
     def list_devices(self):
