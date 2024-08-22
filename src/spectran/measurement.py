@@ -1,7 +1,7 @@
 """This module contains a function to run the measurement. 
 But also the Worker class to run the measurement in a separate thread."""
 
-from .main_window import log, ureg
+from . import log, ureg
 from .daq import DAQ
 import numpy as np
 from PySide6.QtCore import Signal, Slot, QObject
@@ -65,7 +65,7 @@ class WorkerSignals(QObject):
     finished = Signal()
     error = Signal(tuple)
     result = Signal(object)
-    progress = Signal(object)
+    progress = Signal(int, object)
 
 
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject

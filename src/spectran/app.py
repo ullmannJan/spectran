@@ -6,7 +6,16 @@ import sys
 from .main_window import MainWindow
 from . import __version__
 
-def run():
+import logging
+
+def run(level=logging.INFO, format="%(asctime)s  %(levelname)-10s %(name)s: %(message)s", **logging_kwargs):
+
+    if level is not None:
+        logging.basicConfig(
+            level=level,
+            format=format,
+            **logging_kwargs,
+        )
 
     # bug fix for windows where icon is not displayed
     if "win" in sys.platform:

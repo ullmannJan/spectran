@@ -8,15 +8,7 @@ from PySide6.QtCore import Qt, QThreadPool
 from PySide6.QtGui import QIcon, QAction, QPalette
 import sys
 
-from pint import UnitRegistry
-ureg = UnitRegistry()
-import logging
-log = logging.getLogger("spectran")
-logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s  %(levelname)-10s %(name)s: %(message)s",
-)
-
+from . import log
 from .plots import Plots
 from .main_ui import MainUI
 from .data_handler import DataHandler
