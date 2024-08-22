@@ -153,6 +153,7 @@ class MainUI(QWidget):
         self.start_button.setEnabled(True)
 
     def start_measurement(self):
+        
 
         if self.driver_instance is None:
             self.main_window.raise_error("No driver selected")
@@ -182,8 +183,9 @@ class MainUI(QWidget):
         self.stop_button.setEnabled(False)
         self.main_window.stopped = True
 
-        # Open a window that shows that measurement is completed
-        self.main_window.raise_info("Measurement finished")
+        # add to statusbar
+        if self.main_window.statusBar().currentMessage() != "Measurement aborted":
+            self.main_window.statusBar().showMessage("Ready for measurement")
         
     def get_data_and_plot(self, index, data):
         plot_worker = Worker(self.main_window.data_handler.calculate_data, data, index)
@@ -191,7 +193,7 @@ class MainUI(QWidget):
         self.main_window.threadpool.start(plot_worker)
 
     def list_devices(self):
-        log.info(f"Looking for devices on {self.driver_dd.currentText()}")
+        log.info("Looking for devices on {}".format(self.driver_dd.currentText()))
         driver_instance = DAQs[self.driver_dd.currentIndex()]()
         self.device_dd.clear()
         self.device_dd.addItems(driver_instance.list_devices())
@@ -210,4 +212,4 @@ class MainUI(QWidget):
                 f"Driver connected to {self.driver_instance.__class__.__name__}/{self.driver_instance.connected_device}"
             )
 
-        log.info(f"Connected to {self.driver_instance.connected_device}")
+        log.info("Connected to {}".format(self.driver_instance.connected_device))

@@ -16,19 +16,23 @@ def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_call
     
     duration = config["duration"].to(ureg.second).magnitude
     sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
+    averages = config["averages"]
     config["start_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     device = config["device"]
-    log.info(f"Getting sequence from {device} for {duration} s at {sample_rate} Hz")
+    log.info("Getting sequence from {} for {} s at {} Hz".format(device, duration, sample_rate))
+    main_window.statusBar().showMessage(f"Measurement in progress (0 / {averages})")
     
     # create space for data
-    voltage_data = np.empty((config["averages"], int(duration * sample_rate)))
+    voltage_data = np.empty((averages, int(duration * sample_rate)))
 
-    for i in range(config["averages"]):
+    for i in range(averages):
         if main_window.stopped:
             log.info("Measurement stopped")
+            main_window.statusBar().showMessage("Measurement aborted")
             # return the data that has been measured
             return voltage_data[:i]
         
+        main_window.statusBar().showMessage(f"Measurement in progress ({i+1} / {averages})")
         driver_instance.get_sequence(
             voltage_data,
             i,

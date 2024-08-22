@@ -42,6 +42,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Spectrum Analyzer")
         self.setMinimumSize(800, 600)
         self.setWindowIcon(QIcon(str(spectran_path / "data/osci_128.ico")))
+        
+        self.statusBar().showMessage("Ready for measurement")
 
         self.add_menu_bar()
 
@@ -106,11 +108,8 @@ class MainWindow(QMainWindow):
         aboutMenu.addAction(aboutAction)
 
     def update_style(self):
-        log.info(
-            "Updating style to "
-            + self.settings.value("graphics/style")
-            + f" dark_mode = {self.is_dark_mode()}"
-        )
+        log.info("Updating style to {} dark_mode = {}".format(
+                self.settings.value("graphics/style"), self.is_dark_mode()))
         QApplication.setStyle(self.settings.value("graphics/style"))
 
     

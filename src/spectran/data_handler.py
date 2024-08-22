@@ -9,8 +9,6 @@ class DataHandler():
 
     voltage_data = None
     data_has_changed = False
-    # the index that has already been measured 
-    current_index = 0 
     time_seq = None
     frequencies = None
     psd = None
@@ -37,13 +35,12 @@ class DataHandler():
             if index is None:
                 voltages = self.voltage_data
             else:
-                voltages = self.voltage_data[:self.current_index+1]
+                voltages = self.voltage_data[:index+1]
             self.frequencies, psds = welch(voltages,
                                     fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
-            print(self.frequencies.shape)
-            self.psd = np.mean(psds, axis=0) 
+            self.psd = np.mean(psds, axis=0)
             # self.frequencies, self.psd = periodogram(np.mean(self.voltage_data, axis=0), fs=self._config["sample_rate"].to(ureg.kHz).magnitude)
-            log.debug("PSD calculated")
+            log.debug("PSD calculated until index {}".format(index))
             
             return self.frequencies, self.psd
         
@@ -72,7 +69,7 @@ class DataHandler():
                    header=header_text)
         
         # self.main_window.statusBar().showMessage(f"Data saved to {self.file_path}")
-        log.info(f"Data saved to {self.file_path}")
+        log.info("Data saved to {}".format(self.file_path))
         self.main_window.save_window.close()
 
         # raise NotImplementedError("Saving data not implemented yet")

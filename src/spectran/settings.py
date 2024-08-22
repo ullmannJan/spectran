@@ -38,7 +38,7 @@ class Settings(QSettings):
 
     def save(self, key, value):
         """Manage saving all the settings."""
-        log.info(f"Saving setting: {key}")
+        log.info("Saving setting: {}".format(key))
         self.setValue(key, value)
         self.sync()
 
