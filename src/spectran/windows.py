@@ -86,7 +86,7 @@ class AboutWindow(Window):
 
         self.info_layout.addWidget(QLabel(f"<b>Spectran {spectran_version}</b>"))
         self.info_layout.addWidget(
-            QLabel("A simple tool for measuring distances in images.")
+            QLabel("A simple spectrum analyzer.")
         )
         self.info_layout.addWidget(QLabel("Developed by:"))
         self.info_layout.addWidget(QLabel("Jan Ullmann"))
