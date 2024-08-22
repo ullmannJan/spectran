@@ -18,7 +18,7 @@ from PySide6.QtGui import QIcon
 from . import __version__ as spectran_version
 from . import spectran_path
 from .settings import Settings, DEFAULT_SETTINGS
-from .main_window import log
+from . import log
 
 
 class Window(QWidget):

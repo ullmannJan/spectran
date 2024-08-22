@@ -1,9 +1,10 @@
-from .daq import DAQ
 import niscope
 import numpy as np
 from PySide6.QtCore import Signal
 import nisyscfg
-from ..main_window import log, ureg
+
+from .daq import DAQ
+from .. import log, ureg
 
 class NISCOPE(DAQ):
     
@@ -23,27 +24,40 @@ class NISCOPE(DAQ):
     def get_sequence(self, data_holder:np.ndarray, 
                      average_index: int,
                      config:dict,
-                     plotting_signal:Signal) -> np.ndarray:
+                     plotting_signal:Signal = None) -> np.ndarray:
         
+        log.debug("Test")
         # configuration
         duration = config["duration"].to(ureg.second).magnitude
         sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
         averages = config["averages"]
         device = config["device"]
-        log.info(f"Getting sequence from {device} for {duration} s at {sample_rate} kHz")
         
         # niscope configuration
-        channels = [config["input_channel"]]
-        
+        channel = config["input_channel"]
+        num_records = 5
+
         with niscope.Session(resource_name=device) as session:
-            session.configure_vertical(range=10, coupling=niscope.VerticalCoupling.AC)
-            session.configure_horizontal_timing(min_sample_rate=50000000, min_num_pts=length, ref_position=50.0, num_records=num_records, enforce_realtime=True)
+            session.channels[channel].configure_vertical(range=10, 
+                                                         coupling=niscope.VerticalCoupling.AC)
+            session.configure_horizontal_timing(min_sample_rate=sample_rate, 
+                                                min_num_pts=int(sample_rate*duration), 
+                                                # TODO: find out what these do
+                                                ref_position=50.0, 
+                                                num_records=num_records, 
+                                                enforce_realtime=True)
+
             with session.initiate():
-                waveforms = session.channels[channels].fetch_into(waveform=wfm, num_records=num_records)
+                log.debug(f'Starting acquisition')                
+                waveforms = session.channels[channel].fetch_into(waveform=data_holder[average_index], 
+                                                                 num_records=num_records,
+                                                                 timeout=duration)
             for i in range(len(waveforms)):
-                print(f'Waveform {i} information:')
-                print(f'{waveforms[i]}\n\n')
-                print(f'Samples: {waveforms[i].samples.tolist()}')
-                
-                data_holder[i] = waveforms[i].samples
-        plotting_signal.emit(data_holder)
+                log.debug(f'Waveform {i} information:')
+                log.debug(f'{waveforms[i]}\n\n')
+                log.debug(f'Samples: {waveforms[i].samples.tolist()}')
+
+            log.info(f"{average_index+1}/{averages} done.")
+    
+        if plotting_signal is not None:
+            plotting_signal.emit(data_holder)

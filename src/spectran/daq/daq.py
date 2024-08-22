@@ -1,11 +1,11 @@
 """This module contains all functionality regarding communication with the DAQ device.
 """
 
-from ..main_window import log, ureg
+from .. import log, ureg
 
 from abc import ABC, abstractmethod
 import numpy as np
-from PySide6.QtCore import Signal, QThread
+from PySide6.QtCore import Signal
 
 class DAQ(ABC):
     

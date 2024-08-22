@@ -1,5 +1,5 @@
 """This class should contain all data related functionality."""
-from .main_window import log, ureg
+from . import log, ureg
 from scipy.signal import welch, periodogram
 import numpy as np 
 from PySide6.QtWidgets import QFileDialog

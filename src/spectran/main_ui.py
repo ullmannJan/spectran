@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QRegularExpressionValidator
 
 from .settings import DEFAULT_VALUES
-from .main_window import log, ureg
+from . import log, ureg
 from .daq import DAQs, DAQ
 from .measurement import Worker, run_measurement
 
@@ -186,7 +186,6 @@ class MainUI(QWidget):
         self.main_window.raise_info("Measurement finished")
         
     def get_data_and_plot(self, data):
-        # log.info("Getting data and plotting")
         plot_worker = Worker(self.main_window.data_handler.calculate_data, data)
         plot_worker.signals.finished.connect(self.main_window.plots.update_plots)
         self.main_window.threadpool.start(plot_worker)
