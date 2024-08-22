@@ -65,7 +65,7 @@ class DummyDAQ(DAQ):
         data_holder[average_index] = self.acquire(duration, sample_rate)
         if average_index % 1 == 0:
             log.info(f"Emit at {average_index+1}/{averages} - {(time.time()-start_time)*1e3:.2f} ms")
-            plotting_signal.emit(data_holder)
+            plotting_signal.emit(data_holder, average_index)
         else:
             log.info(f"Updating at {average_index+1}/{averages} - {(time.time()-start_time)*1e3:.2f} ms")
 

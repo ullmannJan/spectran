@@ -4,7 +4,7 @@ from PySide6.QtCore import QSettings
 
 DEFAULT_VALUES = {
     "input_channel": 0,
-    "sample_rate": 10_0000 * ureg.Hz,
+    "sample_rate": 100_000 * ureg.Hz,
     "duration": 2 * ureg.second,
     "averages": 1,
     "unit": "Volt",

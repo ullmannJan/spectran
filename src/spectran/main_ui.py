@@ -13,8 +13,8 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtGui import QRegularExpressionValidator
 
-from .settings import DEFAULT_VALUES
 from . import log, ureg
+from .settings import DEFAULT_VALUES
 from .daq import DAQs, DAQ
 from .measurement import Worker, run_measurement
 
@@ -172,7 +172,7 @@ class MainUI(QWidget):
         worker.signals.progress.connect(self.get_data_and_plot)
         worker.signals.finished.connect(self.finish_measurement)
         
-        worker.signals.result.connect(self.get_data_and_plot)
+        worker.signals.result.connect(lambda data: self.get_data_and_plot(None, data))
 
         # Execute
         self.main_window.threadpool.start(worker)
@@ -185,8 +185,8 @@ class MainUI(QWidget):
         # Open a window that shows that measurement is completed
         self.main_window.raise_info("Measurement finished")
         
-    def get_data_and_plot(self, data):
-        plot_worker = Worker(self.main_window.data_handler.calculate_data, data)
+    def get_data_and_plot(self, index, data):
+        plot_worker = Worker(self.main_window.data_handler.calculate_data, data, index)
         plot_worker.signals.finished.connect(self.main_window.plots.update_plots)
         self.main_window.threadpool.start(plot_worker)
 
