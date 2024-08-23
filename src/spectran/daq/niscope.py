@@ -23,9 +23,16 @@ class NISCOPE(DAQ):
 
         return output
     
+    def get_properties(self, device):
+        with niscope.Session(device) as session:
+            max_sample_rate = session.max_real_time_sampling_rate
+
+        return {"Sample rate": ("max", max_sample_rate)}
+    
     def get_sequence(self, data_holder:np.ndarray, 
                      average_index: int,
                      config:dict,
+                     main_window,
                      plotting_signal:Signal = None) -> np.ndarray:
         
         # configuration
@@ -38,7 +45,11 @@ class NISCOPE(DAQ):
         channel = config["input_channel"]
 
         with niscope.Session(resource_name=device) as session:
-            session.channels[channel].configure_vertical(range=config["signal_range_max"].to(ureg.volt).magnitude, 
+            v_range = config["signal_range_max"].to(ureg.volt).magnitude - config["signal_range_min"].to(ureg.volt).magnitude
+            v_offset = (config["signal_range_max"].to(ureg.volt).magnitude + config["signal_range_min"].to(ureg.volt).magnitude) / 2
+
+            session.channels[channel].configure_vertical(range=v_range,
+                                                         offset=v_offset,
                                                          coupling=niscope.VerticalCoupling.AC)
             session.configure_horizontal_timing(min_sample_rate=sample_rate, 
                                                 min_num_pts=int(sample_rate*duration), 
@@ -47,14 +58,28 @@ class NISCOPE(DAQ):
                                                 ref_position=50.0, 
                                                 enforce_realtime=True)
 
+            # set gui information
+            real_sample_rate = session.horz_sample_rate
+            log.debug("Sample Rate: {}".format(real_sample_rate))
+            main_window.main_ui.sample_rate_status.setText(str(real_sample_rate))
+            vertical_range = session.channels[channel].vertical_range
+            vertical_offset = session.channels[channel].vertical_offset
+            log.debug("Range of device: {} with offset {}".format(vertical_range, 
+                                                        vertical_offset))
+            main_window.main_ui.range_min_status.setText(str(vertical_offset - vertical_range / 2))
+            main_window.main_ui.range_max_status.setText(str(vertical_offset + vertical_range / 2))
+           
+           # start measurement
             with session.initiate():
                 log.debug(f'Starting acquisition')                
                 waveforms = session.channels[channel].fetch_into(waveform=data_holder[average_index], 
                                                                  num_records=1,
+                                                                 timeout=duration*2
                                                                 )
             for i in range(len(waveforms)):
                 log.debug(f'Waveform {i} information:')
                 log.debug(f'{waveforms[i]}')
+            
 
             log.info(f"{average_index+1}/{averages} done.")
     

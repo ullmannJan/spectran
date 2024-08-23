@@ -29,9 +29,14 @@ class DAQ(ABC):
         return self.connected_device
     
     @abstractmethod
+    def get_properties(self, device):
+        return dict(no_props = None)
+    
+    @abstractmethod
     def get_sequence(self, data_holder:np.ndarray, 
                      average_index:int,
                      config:dict,
+                     main_window,
                      plotting_signal:Signal) -> np.ndarray:
         """Get data from DAQ device
 
@@ -45,15 +50,20 @@ class DAQ(ABC):
         Returns:
             np.ndarray: data_holder with data
         """
+
 import time
 class DummyDAQ(DAQ):
      
     def list_devices(self):
         return ["Dev1", "Dev2", "Dev3"]
     
+    def get_properties(self, device):
+        return super().get_properties(device)
+    
     def get_sequence(self, data_holder:np.ndarray,
                      average_index:int, 
                      config:dict,
+                     main_window,
                      plotting_signal:Signal):
         
         duration = config["duration"].to(ureg.second).magnitude

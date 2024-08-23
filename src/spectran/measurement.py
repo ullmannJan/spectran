@@ -21,7 +21,7 @@ def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_call
     device = config["device"]
     log.info("Getting sequence from {} for {} s at {} Hz".format(device, duration, sample_rate))
     main_window.statusBar().showMessage(f"Measurement in progress (0 / {averages})")
-    
+
     # create space for data
     voltage_data = np.empty((averages, int(duration * sample_rate)))
 
@@ -38,6 +38,7 @@ def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_call
             voltage_data,
             i,
             config,
+            main_window,
             plotting_signal=progress_callback)
     
     return voltage_data

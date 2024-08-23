@@ -16,6 +16,7 @@ from PySide6.QtGui import QRegularExpressionValidator
 import numpy as np
 
 from . import log, ureg
+from .windows import PropertiesWindow
 from .settings import DEFAULT_VALUES
 from .daq import DAQs, DAQ
 from .measurement import Worker, run_measurement
@@ -39,6 +40,8 @@ class MainUI(QWidget):
         self.add_driver_box()
 
         self.add_settings_box()
+
+        self.add_status_box()
 
         self.layout.addStretch()
         
@@ -69,11 +72,18 @@ class MainUI(QWidget):
         driver_layout.addWidget(QLabel("Device: "), 1, 0)
         self.device_dd = QComboBox()
         driver_layout.addWidget(self.device_dd, 1, 1)
-
+        
         # Connect Button
         self.connect_button = QPushButton("Connect")
-        driver_layout.addWidget(self.connect_button, 2, 0, 1, 2)
+        driver_layout.addWidget(self.connect_button, 2, 0, 1, 1)
         self.connect_button.clicked.connect(self.connect_device)
+
+        # Show properties button
+        self.properties_button = QPushButton("Show Properties")
+        driver_layout.addWidget(self.properties_button, 2, 1, 1, 1)
+        self.properties_button.clicked.connect(self.show_device_properties)
+        # TODO: it needs to be implemented that this button can not be pressed during measurement
+        self.properties_button.setEnabled(False)
 
         # Connect Signals
         self.driver_dd.currentTextChanged.connect(self.list_devices)
@@ -130,11 +140,11 @@ class MainUI(QWidget):
         self.averages_edit.setValidator(QRegularExpressionValidator(r"^\d+$", self))
         self.settings_layout.addWidget(self.averages_edit, row, 1)
 
-        # Duration
+        # Signal Range
         row = 4
         self.settings_layout.addWidget(QLabel("Signal Range: "), row, 0)
 
-        self.range_layout = QHBoxLayout()
+        range_layout = QHBoxLayout()
         self.range_min_edit = QLineEdit(
             placeholderText=str(DEFAULT_VALUES["signal_range_min"].to(ureg.volt).magnitude)
         )
@@ -147,13 +157,46 @@ class MainUI(QWidget):
         self.range_max_edit.setValidator(
             QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self)
         )
-        self.range_layout.addWidget(self.range_min_edit)
-        self.range_layout.addWidget(self.range_max_edit)
+        range_layout.addWidget(self.range_min_edit)
+        range_layout.addWidget(self.range_max_edit)
 
-        self.settings_layout.addLayout(self.range_layout, row, 1)
+        self.settings_layout.addLayout(range_layout, row, 1)
         self.settings_layout.addWidget(QLabel("V"), row, 2)
 
+    def add_status_box(self):
 
+        # Channel Settings
+        status_gbox = QGroupBox("Device Status")
+        self.layout.addWidget(status_gbox)
+
+        self.status_layout = QGridLayout()
+        status_gbox.setLayout(self.status_layout)
+
+        # Sample Rate
+        row = 0
+        self.status_layout.addWidget(QLabel("Sample Rate: "), row, 0)
+        self.sample_rate_status = QLineEdit(self)
+        self.sample_rate_status.setReadOnly(True)
+        self.status_layout.addWidget(self.sample_rate_status, row, 1)
+        self.status_layout.addWidget(QLabel("Hz"), row, 2)
+
+        # Signal Range
+        row = 1
+        self.status_layout.addWidget(QLabel("Signal Range: "), row, 0)
+ 
+        range_status_layout = QHBoxLayout()
+        self.range_min_status = QLineEdit()
+        self.range_min_status.setReadOnly(True)
+        self.range_max_status = QLineEdit()
+        self.range_max_status.setReadOnly(True)
+        range_status_layout.addWidget(self.range_min_status)
+        range_status_layout.addWidget(self.range_max_status)
+ 
+        self.status_layout.addLayout(range_status_layout, row, 1)
+        self.status_layout.addWidget(QLabel("V"), row, 2)
+
+        self.status_layout = QGridLayout()
+        status_gbox.setLayout(self.status_layout)
 
     def get_config(self):
 
@@ -168,7 +211,7 @@ class MainUI(QWidget):
             output["averages"] = int(self.averages_edit.text())
         if self.range_min_edit.text():
             output["signal_range_min"] = float(self.range_min_edit.text()) * ureg.volt
-        if self.range_min_edit.text():
+        if self.range_max_edit.text():
             output["signal_range_max"] = float(self.range_max_edit.text()) * ureg.volt
         if self.driver_instance is not None:
             output["driver"] = self.driver_instance.__class__.__name__
@@ -176,6 +219,12 @@ class MainUI(QWidget):
             output["device"] = self.driver_instance.connected_device
 
         return output
+    
+    def show_device_properties(self, ):
+        if self.driver_instance and self.driver_instance.connected_device:
+            self.properties_page = PropertiesWindow(parent=self, driver=self.driver_instance)
+            self.properties_page.show()
+            self.properties_page.activateWindow()
     
     def stop_measurement(self):
         self.main_window.threadpool.clear()
@@ -252,5 +301,7 @@ class MainUI(QWidget):
             self.driver_gbox.setTitle(
                 f"Driver connected to {self.driver_instance.__class__.__name__}/{self.driver_instance.connected_device}"
             )
+
+        
 
         log.info("Connected to {}".format(self.driver_instance.connected_device))

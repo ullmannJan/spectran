@@ -51,7 +51,7 @@ class Plots(pg.GraphicsLayoutWidget):
         self.plot1.clear()
         # plot the new data
         self.plot1.plot(x, y,
-                        pen=pg.mkPen(width=.5))
+                        pen=pg.mkPen(width=.5, color="w"))
 
     def update_spectrum_plot(self, x, y):
         # clear the plot

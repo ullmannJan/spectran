@@ -24,10 +24,19 @@ class NIDAQMX(DAQ):
 
         return [d.name for d in local_system.devices]
     
+    def get_properties(self, device):
+        local_system = ni.system.System.local()
+        device = local_system.devices[device]
+        min_rate = device.ai_min_rate
+        max_rate = device.ai_max_single_chan_rate
+        
+        return {"Sample rate": ("min", min_rate, "max", max_rate),
+                }
 
     def get_sequence(self, data_holder: np.ndarray, 
                      average_index: int, 
                      config: dict, 
+                     main_window,
                      plotting_signal) -> np.ndarray:
         
         duration = config["duration"].to(ureg.second).magnitude
@@ -47,6 +56,16 @@ class NIDAQMX(DAQ):
                 source="OnboardClock", 
                 samps_per_chan=int(sample_rate*duration),
             )
+
+            # Log the actual settings
+            log.info("AI Min: {} V".format(aichan.ai_min))
+            log.info("AI Max: {} V".format(aichan.ai_max))
+            log.info("Sample Rate: {} Hz".format(read_task.timing.samp_clk_rate))
+
+             # set gui information
+            main_window.main_ui.sample_rate_status.setText(str(read_task.timing.samp_clk_rate))
+            main_window.main_ui.range_min_status.setText(str(aichan.ai_min))
+            main_window.main_ui.range_max_status.setText(str(aichan.ai_max))
 
             reader = AnalogSingleChannelReader(task_in_stream=read_task.in_stream)
 
