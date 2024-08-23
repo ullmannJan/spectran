@@ -9,13 +9,17 @@ from .daq import DAQ
 class NIDAQMX(DAQ):
 
     def list_devices(self) -> list[str]:
-        
-        local_system = ni.system.System.local()
-        driver_version = local_system.driver_version
+        try:
+            local_system = ni.system.System.local()
+            driver_version = local_system.driver_version
+            
+        except Exception as e:
+            log.info("No NIDAQmx driver installed")
+            return []
 
         log.debug("DAQmx {}.{}.{}".format(driver_version.major_version, 
-                                          driver_version.minor_version, 
-                                          driver_version.update_version)
+                                            driver_version.minor_version, 
+                                            driver_version.update_version)
         )
 
         return [d.name for d in local_system.devices]
