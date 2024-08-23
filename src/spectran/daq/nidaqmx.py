@@ -63,9 +63,9 @@ class NIDAQMX(DAQ):
             log.info("Sample Rate: {} Hz".format(read_task.timing.samp_clk_rate))
 
              # set gui information
-            main_window.main_ui.sample_rate_status.setText(str(read_task.timing.samp_clk_rate))
-            main_window.main_ui.range_min_status.setText(str(aichan.ai_min))
-            main_window.main_ui.range_max_status.setText(str(aichan.ai_max))
+            main_window.main_ui.sample_rate_status.setText(f"{read_task.timing.samp_clk_rate:6g}")
+            main_window.main_ui.range_min_status.setText(f"{aichan.ai_min:6g}")
+            main_window.main_ui.range_max_status.setText(f"{aichan.ai_max:6g}")
 
             reader = AnalogSingleChannelReader(task_in_stream=read_task.in_stream)
 
