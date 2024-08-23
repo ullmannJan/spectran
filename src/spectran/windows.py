@@ -5,12 +5,14 @@ from PySide6.QtWidgets import (
     QWidget,
     QGroupBox,
     QPushButton,
-    QCheckBox,
+    QTableWidget,
+    QTableWidgetItem,
     QLineEdit,
     QHBoxLayout,
     QComboBox,
     QTabWidget,
     QStyleFactory,
+    QHeaderView,
 )
 from PySide6.QtGui import QIcon
 
@@ -223,4 +225,42 @@ class SettingsWindow(Window):
     def changed(self):
         """Check if there is a change in the settings gui."""
         return not self.settings.equals_settings(self.current_selection)
+
+class PropertiesWindow(Window):
+    """
+    The window displaying properties of the connected device.
+    """
+
+    def __init__(self, driver, *args, **kwargs):
+        super().__init__(title="Device Properties", *args, **kwargs)
+
+        self.setMinimumSize(500, 300)
+
+
+        self.info_layout = QVBoxLayout()
+        properties = driver.get_properties(driver.connected_device)
+
+        self.info_layout.addWidget(QLabel(f"<b>Device Properties</b>"))
+        
+        table = QTableWidget()
+        table.setRowCount(len(properties))
+        table.setColumnCount(2)
+        table.horizontalHeader().setVisible(False)
+        table.verticalHeader().setVisible(False)
+
+        for row, (key, value) in enumerate(properties.items()):
+            table.setItem(row, 0, QTableWidgetItem(str(key)))
+            if isinstance(value, tuple):
+                table.setColumnCount(len(value)+1)
+                for i, v in enumerate(value, start=1):
+                    table.setItem(row, i, QTableWidgetItem(str(v)))
+            else:
+                table.setItem(row, 1, QTableWidgetItem(str(value)))
+
+        # Stretch the last column
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        table.resizeColumnsToContents()
+
+        self.info_layout.addWidget(table)
+        self.layout.addLayout(self.info_layout)
 
