@@ -7,7 +7,8 @@ DEFAULT_VALUES = {
     "sample_rate": 100_000 * ureg.Hz,
     "duration": 2 * ureg.second,
     "averages": 1,
-    "signal_range": (-10 * ureg.volt, 10 * ureg.volt, ),
+    "signal_range_min": -5 * ureg.volt, 
+    "signal_range_max":  5 * ureg.volt,
     "unit": "Volt",
 }
 

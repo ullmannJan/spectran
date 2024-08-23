@@ -36,10 +36,11 @@ class DataHandler():
                 voltages = self.voltage_data
             else:
                 voltages = self.voltage_data[:index+1]
-            self.frequencies, psds = welch(voltages,
-                                    fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
+            # self.frequencies, psds = welch(voltages,
+            #                         fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
+            self.frequencies, psds = periodogram(self.voltage_data, 
+                                                 fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
             self.psd = np.mean(psds, axis=0)
-            # self.frequencies, self.psd = periodogram(np.mean(self.voltage_data, axis=0), fs=self._config["sample_rate"].to(ureg.kHz).magnitude)
             log.debug("PSD calculated until index {}".format(index))
             
             return self.frequencies, self.psd

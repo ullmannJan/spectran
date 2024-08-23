@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QLineEdit,
     QComboBox,
+    QHBoxLayout,
 )
 
 from PySide6.QtGui import QRegularExpressionValidator
@@ -30,7 +31,7 @@ class MainUI(QWidget):
         self.main_window = main_window
 
         self.setMinimumWidth(300)
-        self.setMaximumWidth(400)
+        self.setMaximumWidth(350)
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -129,6 +130,31 @@ class MainUI(QWidget):
         self.averages_edit.setValidator(QRegularExpressionValidator(r"^\d+$", self))
         self.settings_layout.addWidget(self.averages_edit, row, 1)
 
+        # Duration
+        row = 4
+        self.settings_layout.addWidget(QLabel("Signal Range: "), row, 0)
+
+        self.range_layout = QHBoxLayout()
+        self.range_min_edit = QLineEdit(
+            placeholderText=str(DEFAULT_VALUES["signal_range_min"].to(ureg.volt).magnitude)
+        )
+        self.range_min_edit.setValidator(
+            QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self)
+        )
+        self.range_max_edit = QLineEdit(
+            placeholderText=str(DEFAULT_VALUES["signal_range_max"].to(ureg.volt).magnitude)
+        )
+        self.range_max_edit.setValidator(
+            QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self)
+        )
+        self.range_layout.addWidget(self.range_min_edit)
+        self.range_layout.addWidget(self.range_max_edit)
+
+        self.settings_layout.addLayout(self.range_layout, row, 1)
+        self.settings_layout.addWidget(QLabel("V"), row, 2)
+
+
+
     def get_config(self):
 
         output = DEFAULT_VALUES.copy()
@@ -140,6 +166,10 @@ class MainUI(QWidget):
             output["duration"] = float(self.duration_edit.text()) * ureg.second
         if self.averages_edit.text():
             output["averages"] = int(self.averages_edit.text())
+        if self.range_min_edit.text():
+            output["signal_range_min"] = float(self.range_min_edit.text()) * ureg.volt
+        if self.range_min_edit.text():
+            output["signal_range_max"] = float(self.range_max_edit.text()) * ureg.volt
         if self.driver_instance is not None:
             output["driver"] = self.driver_instance.__class__.__name__
         if self.driver_instance.connected_device is not None:

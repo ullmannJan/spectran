@@ -38,7 +38,7 @@ class NISCOPE(DAQ):
         channel = config["input_channel"]
 
         with niscope.Session(resource_name=device) as session:
-            session.channels[channel].configure_vertical(range=config["signal_range"][1].to(ureg.volt).magnitude, 
+            session.channels[channel].configure_vertical(range=config["signal_range_max"].to(ureg.volt).magnitude, 
                                                          coupling=niscope.VerticalCoupling.AC)
             session.configure_horizontal_timing(min_sample_rate=sample_rate, 
                                                 min_num_pts=int(sample_rate*duration), 

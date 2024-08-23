@@ -26,7 +26,6 @@ class NIDAQMX(DAQ):
                      config: dict, 
                      plotting_signal) -> np.ndarray:
         
-        signal_range = config["signal_range"]
         duration = config["duration"].to(ureg.second).magnitude
         sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
         averages = config["averages"]
@@ -36,8 +35,8 @@ class NIDAQMX(DAQ):
             log.debug(f'Starting acquisition')
 
             aichan = read_task.ai_channels.add_ai_voltage_chan(f'{config["device"]}/ai{config["input_channel"]}')
-            aichan.ai_min = signal_range[0].to(ureg.volt).magnitude
-            aichan.ai_max = signal_range[1].to(ureg.volt).magnitude
+            aichan.ai_min = config["signal_range_min"].to(ureg.volt).magnitude
+            aichan.ai_max = config["signal_range_max"].to(ureg.volt).magnitude
         
             read_task.timing.cfg_samp_clk_timing(
                 rate=sample_rate, 
