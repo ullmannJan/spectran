@@ -16,6 +16,8 @@ class NISCOPE(DAQ):
             filter.is_present = True
             filter.is_ni_product = True
             filter.is_device = True
+            filter.has_driver = 1
+            filter.is_chassis = False
             for resource in session.find_hardware(filter):
                 output.append(resource.expert_user_alias[0])
 
@@ -36,7 +38,7 @@ class NISCOPE(DAQ):
         channel = config["input_channel"]
 
         with niscope.Session(resource_name=device) as session:
-            session.channels[channel].configure_vertical(range=10, 
+            session.channels[channel].configure_vertical(range=config["signal_range"][1].to(ureg.volt).magnitude, 
                                                          coupling=niscope.VerticalCoupling.AC)
             session.configure_horizontal_timing(min_sample_rate=sample_rate, 
                                                 min_num_pts=int(sample_rate*duration), 
