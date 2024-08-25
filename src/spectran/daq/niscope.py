@@ -59,15 +59,18 @@ class NISCOPE(DAQ):
                                                 enforce_realtime=True)
 
             # set gui information
-            real_sample_rate = session.horz_sample_rate
-            log.debug("Sample Rate: {}".format(real_sample_rate))
-            main_window.main_ui.sample_rate_status.setText(f"{real_sample_rate:.6g}")
+            config["sample_rate_real"] = session.horz_sample_rate
+            log.debug("Sample Rate: {}".format(config["sample_rate_real"]))
+            main_window.main_ui.sample_rate_status.setText(f"{config['sample_rate_real']:6g}")
+            
             vertical_range = session.channels[channel].vertical_range
             vertical_offset = session.channels[channel].vertical_offset
             log.debug("Range of device: {} with offset {}".format(vertical_range, 
                                                         vertical_offset))
-            main_window.main_ui.range_min_status.setText(f"{vertical_offset - vertical_range / 2:.6g}")
-            main_window.main_ui.range_max_status.setText(f"{vertical_offset + vertical_range / 2:.6g}")
+            config["signal_range_min_real"] = vertical_offset - vertical_range / 2
+            config["signal_range_max_real"] = vertical_offset + vertical_range / 2
+            main_window.main_ui.range_min_status.setText(f"{config['signal_range_min_real']:.6g}")
+            main_window.main_ui.range_max_status.setText(f"{config['signal_range_max_real']:.6g}")
            
            # start measurement
             with session.initiate():
