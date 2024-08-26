@@ -25,22 +25,28 @@ def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_call
     # create space for data
     voltage_data = np.empty((averages, int(duration * sample_rate)))
 
-    for i in range(averages):
-        if main_window.stopped:
-            log.info("Measurement stopped")
-            main_window.statusBar().showMessage("Measurement aborted")
-            # return the data that has been measured
-            return voltage_data[:i]
-        
-        # normal operation
-        main_window.statusBar().showMessage(f"Measurement in progress ({i+1} / {averages})")
-        driver_instance.get_sequence(
-            voltage_data,
-            i,
-            config,
-            main_window,
-            plotting_signal=progress_callback)
+    try:
+        for i in range(averages):
+            if main_window.stopped:
+                log.info("Measurement stopped")
+                main_window.statusBar().showMessage("Measurement aborted")
+                # return the data that has been measured
+                return voltage_data[:i]
+            
+            # normal operation
+            main_window.statusBar().showMessage(f"Measurement in progress ({i+1} / {averages})")
+            driver_instance.get_sequence(
+                voltage_data,
+                i,
+                config,
+                main_window,
+                plotting_signal=progress_callback)
     
+    except Exception as e:
+        main_window.statusBar().showMessage("Measurement failed")
+        main_window.main_ui.stop_measurement()
+        raise e
+        
     return voltage_data
 
 
