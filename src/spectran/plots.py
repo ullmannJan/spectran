@@ -10,7 +10,13 @@ class Plots(pg.GraphicsLayoutWidget):
 
         self.main_window = main_window
 
+        self.addItem(pg.LabelItem("Signal", justify="center", size="large"), col=0)
+        self.nextRow()
         self.plot1 = self.addPlot()
+        self.nextRow()
+        self.addItem(pg.LabelItem("PSD", justify="center", size="large"), col=0)
+        self.label = pg.LabelItem(justify="right", color="w")
+        self.addItem(self.label, col=0)
         self.nextRow()
         self.plot2 = self.addPlot()
 
@@ -27,9 +33,22 @@ class Plots(pg.GraphicsLayoutWidget):
         self.plot2.getAxis("left").enableAutoSIPrefix(enable=False)
         self.plot2.getAxis("bottom").enableAutoSIPrefix(enable=False)
 
-    def update_plots(self):
+
+        self.proxy = pg.SignalProxy(self.plot2.scene().sigMouseMoved, rateLimit=60, slot=self.on_mouse_move)
+
+    def on_mouse_move(self, event):
+        pos = event[0]
+        if self.plot2.sceneBoundingRect().contains(pos):
+            mousePoint = self.plot2.vb.mapSceneToView(pos)
+            x = 10 ** mousePoint.x() if self.plot2.ctrl.logXCheck.isChecked() else mousePoint.x()
+            y = 10 ** mousePoint.y() if self.plot2.ctrl.logYCheck.isChecked() else mousePoint.y()
+            self.label.setText(f"x = {x:.3e}, y = {y:.3e}")
+
+    def update_plots(self, index=None):
         
-        log.debug("Updating plots")
+        if index is None:
+            index = -1
+        log.debug("Updating plots with index {}".format(index))
 
         if self.main_window.data_handler.data_has_changed:
             self.main_window.data_handler.data_has_changed = False
@@ -38,7 +57,7 @@ class Plots(pg.GraphicsLayoutWidget):
 
             self.update_signal_plot(
                 self.main_window.data_handler.time_seq, 
-                np.mean(data, axis=0)
+                data[index,:]
             )
             self.update_spectrum_plot(
                 # we don't plot the first frequency (0 Hz)

@@ -238,7 +238,7 @@ class PropertiesWindow(Window):
 
 
         self.info_layout = QVBoxLayout()
-        properties = driver.get_properties(driver.connected_device)
+        properties = driver.get_properties()
 
         self.info_layout.addWidget(QLabel(f"<b>Device Properties</b>"))
         

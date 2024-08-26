@@ -1,7 +1,7 @@
 from nidaqmx import Task
-from nidaqmx.system import System, physical_channel
+from nidaqmx.system import System, Device
 from nidaqmx.stream_readers import AnalogSingleChannelReader
-from nidaqmx.constants import READ_ALL_AVAILABLE
+from nidaqmx.constants import TerminalConfiguration
 import numpy as np
 
 from .. import log, ureg
@@ -32,9 +32,12 @@ class NIDAQMX(DAQ):
         # remove the device name and the slash
         return [terminal.name.replace(self.connected_device, "")[1:] for terminal in device.ai_physical_chans]
 
-    def get_properties(self, device):
+    def list_term_configs(self):
+        return TerminalConfiguration, TerminalConfiguration.DIFF
+
+    def get_properties(self):
         local_system = System.local()
-        device = local_system.devices[device]
+        device = local_system.devices[self.connected_device]
         min_rate = device.ai_min_rate
         max_rate = device.ai_max_single_chan_rate
         
@@ -50,14 +53,19 @@ class NIDAQMX(DAQ):
         duration = config["duration"].to(ureg.second).magnitude
         sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
         averages = config["averages"]
+
+        # Clear all Buffers
+        Device(config["device"]).reset_device()
         
         with Task() as read_task:
             # add inputs
             log.debug(f'Starting acquisition')
 
-            aichan = read_task.ai_channels.add_ai_voltage_chan(f'{config["device"]}/{config["input_channel"]}')
+            aichan = read_task.ai_channels.add_ai_voltage_chan(f'{config["device"]}/{config["input_channel"]}',
+                                                               terminal_config=config["terminal_config"])
             aichan.ai_min = config["signal_range_min"].to(ureg.volt).magnitude
             aichan.ai_max = config["signal_range_max"].to(ureg.volt).magnitude
+            # aichan.
         
             read_task.timing.cfg_samp_clk_timing(
                 rate=sample_rate, 
@@ -82,7 +90,8 @@ class NIDAQMX(DAQ):
             reader = AnalogSingleChannelReader(task_in_stream=read_task.in_stream)
 
             reader.read_many_sample(data=data_holder[average_index],
-                                    number_of_samples_per_channel=READ_ALL_AVAILABLE)
+                                    number_of_samples_per_channel=int(sample_rate*duration),
+                                    timeout=2*duration)
             
             log.info(f"{average_index+1}/{averages} done.")
 

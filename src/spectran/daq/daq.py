@@ -2,6 +2,7 @@
 """
 
 from .. import log, ureg
+from enum import Enum
 
 from abc import ABC, abstractmethod
 import numpy as np
@@ -24,8 +25,12 @@ class DAQ(ABC):
         """List ports picked up by self.connected_device
 
         Returns:
-            list[str]: list of names of devices
+            list[str]: list of names of ports
         """
+
+    @abstractmethod
+    def list_term_configs(self) -> tuple[Enum, int]:
+        """List of Terminal configurations and the default element"""
     
     def connect_device(self, resource_name):
         """Connect to the device
@@ -37,8 +42,8 @@ class DAQ(ABC):
         return self.connected_device
     
     @abstractmethod
-    def get_properties(self, device):
-        return dict(no_props = None)
+    def get_properties(self) -> dict:
+        """Returns properties of self.connected_device in a dict"""
     
     @abstractmethod
     def get_sequence(self, data_holder:np.ndarray, 
@@ -68,8 +73,11 @@ class DummyDAQ(DAQ):
     def list_ports(self):
         return ["ai1", "ai2", "ai3"]
     
-    def get_properties(self, device):
-        return super().get_properties(device)
+    def list_term_configs(self):
+        return Enum("Test", names='RED GREEN BLUE'), 1
+    
+    def get_properties(self):
+        return super().get_properties()
     
     def get_sequence(self, data_holder:np.ndarray,
                      average_index:int, 

@@ -1,4 +1,5 @@
 import niscope
+from niscope import TerminalConfiguration
 import numpy as np
 from PySide6.QtCore import Signal
 import nisyscfg
@@ -25,15 +26,17 @@ class NISCOPE(DAQ):
     
     def list_ports(self) -> list[str]:
         with niscope.Session(self.connected_device) as session:
-            print(session.channel_count)
             return session.get_channel_names(f"0-{session.channel_count-1}")#[c.logical_name for c in session.channels]
 
     
-    def get_properties(self, device):
-        with niscope.Session(device) as session:
+    def get_properties(self):
+        with niscope.Session(self.connected_device) as session:
             max_sample_rate = session.max_real_time_sampling_rate
 
         return {"Sample rate": ("max", max_sample_rate)}
+    
+    def list_term_configs(self):
+        return TerminalConfiguration, TerminalConfiguration.SINGLE_ENDED
     
     def get_sequence(self, data_holder:np.ndarray, 
                      average_index: int,
@@ -54,6 +57,7 @@ class NISCOPE(DAQ):
             v_range = config["signal_range_max"].to(ureg.volt).magnitude - config["signal_range_min"].to(ureg.volt).magnitude
             v_offset = (config["signal_range_max"].to(ureg.volt).magnitude + config["signal_range_min"].to(ureg.volt).magnitude) / 2
 
+            session.channels[channel].channel_terminal_configuration = config["terminal_config"]
             session.channels[channel].configure_vertical(range=v_range,
                                                          offset=v_offset,
                                                          coupling=niscope.VerticalCoupling.AC)

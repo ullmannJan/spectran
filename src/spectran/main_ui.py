@@ -104,8 +104,14 @@ class MainUI(QWidget):
         self.input_channel_dd = QComboBox()
         self.settings_layout.addWidget(self.input_channel_dd, row, 1)
 
+        # Input Channel
+        row += 1
+        self.settings_layout.addWidget(QLabel("Terminal Configuration: "), row, 0)
+        self.terminal_mode_dd = QComboBox()
+        self.settings_layout.addWidget(self.terminal_mode_dd, row, 1)
+
         # Sample Rate
-        row = 1
+        row += 1
         self.settings_layout.addWidget(QLabel("Sample Rate: "), row, 0)
         self.sample_rate_edit = QLineEdit(
             placeholderText=str(DEFAULT_VALUES["sample_rate"].to(ureg.kHz).magnitude)
@@ -117,7 +123,7 @@ class MainUI(QWidget):
         self.settings_layout.addWidget(QLabel("kHz"), row, 2)
 
         # Duration
-        row = 2
+        row += 1
         self.settings_layout.addWidget(QLabel("Duration: "), row, 0)
         self.duration_edit = QLineEdit(
             placeholderText=str(DEFAULT_VALUES["duration"].to(ureg.second).magnitude)
@@ -129,14 +135,14 @@ class MainUI(QWidget):
         self.settings_layout.addWidget(QLabel("s"), row, 2)
 
         # Averages
-        row = 3
+        row += 1
         self.settings_layout.addWidget(QLabel("Averages: "), row, 0)
         self.averages_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["averages"]))
         self.averages_edit.setValidator(QRegularExpressionValidator(r"^\d+$", self))
         self.settings_layout.addWidget(self.averages_edit, row, 1)
 
         # Signal Range
-        row = 4
+        row += 1
         self.settings_layout.addWidget(QLabel("Signal Range: "), row, 0)
 
         range_layout = QHBoxLayout()
@@ -157,6 +163,7 @@ class MainUI(QWidget):
 
         self.settings_layout.addLayout(range_layout, row, 1)
         self.settings_layout.addWidget(QLabel("V"), row, 2)
+
 
     def add_status_box(self):
 
@@ -212,6 +219,7 @@ class MainUI(QWidget):
             output["driver"] = self.driver_instance.__class__.__name__
         if self.driver_instance.connected_device is not None:
             output["device"] = self.driver_instance.connected_device
+        output["terminal_config"] = self.terminal_mode_dd.currentData()
 
         return output
     
@@ -248,14 +256,13 @@ class MainUI(QWidget):
         worker = Worker(run_measurement, self.driver_instance, config, self.main_window)
         worker.signals.progress.connect(self.get_data_and_plot)
         worker.signals.error.connect(self.main_window.raise_error)
-        worker.signals.finished.connect(self.finish_measurement)
+        worker.signals.result.connect(self.finish_measurement)
         
-        worker.signals.result.connect(lambda data: self.get_data_and_plot(None, data))
-
         # Execute
         self.main_window.threadpool.start(worker)
 
-    def finish_measurement(self):
+    def finish_measurement(self, data):
+        self.get_data_and_plot(None, data)
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.main_window.stopped = True
@@ -273,7 +280,8 @@ class MainUI(QWidget):
             data (np.ndarray): array holding the voltage values
         """
         plot_worker = Worker(self.main_window.data_handler.calculate_data, data, index)
-        plot_worker.signals.finished.connect(self.main_window.plots.update_plots)
+        plot_worker.signals.finished.connect(
+            lambda: self.main_window.plots.update_plots(index=index))
         plot_worker.signals.error.connect(self.main_window.raise_error)
         self.main_window.threadpool.start(plot_worker)
 
@@ -300,5 +308,15 @@ class MainUI(QWidget):
         # show input channel options for that device
         self.input_channel_dd.clear()
         self.input_channel_dd.addItems(self.driver_instance.list_ports())
+        # show modes for input channel
+        self.update_mode_dd()
 
         log.info("Connected to {}".format(self.driver_instance.connected_device))
+
+    def update_mode_dd(self):
+        # show modes for input channel
+        self.terminal_mode_dd.clear()
+        enums, default = self.driver_instance.list_term_configs()
+        for e in enums:
+            self.terminal_mode_dd.addItem(e.name, e)
+        self.terminal_mode_dd.setCurrentText(default.name)

@@ -60,12 +60,13 @@ class DataHandler():
         self.file_path = Path(filename)
         header_text = (f"Measurement with Driver:{self._config['driver']} on Device:{self._config['device']}\n"
             + f"Date: {self._config['start_time']}\n"
-            + f"Input Channel: {self._config['input_channel']}\n"
+            + f"Input Channel: {self._config['input_channel']} with {self._config['terminal_config']}\n"
             + f"Duration: {self._config['duration']}\n"
             + f"Sample Rate: {self._config['sample_rate_real']}\n"
             + f"Averages: {self._config['averages']}\n"
             + f"Unit for Data: {self._config['unit']}\n"
-            + f"Signal Range: {self._config['signal_range_min_real']}, {self._config['signal_range_max_real']}")
+            + f"Signal Range: {self._config['signal_range_min_real']}, {self._config['signal_range_max_real']}"
+            )
 
         np.savetxt(self.file_path, self.voltage_data.T, 
                    delimiter="\t",
