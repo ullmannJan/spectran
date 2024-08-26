@@ -101,13 +101,8 @@ class MainUI(QWidget):
         # Input Channel
         row = 0
         self.settings_layout.addWidget(QLabel("Input Channel: "), row, 0)
-        self.input_channel_edit = QLineEdit(
-            placeholderText=str(DEFAULT_VALUES["input_channel"])
-        )
-        self.input_channel_edit.setValidator(
-            QRegularExpressionValidator(r"^\d+$", self)
-        )
-        self.settings_layout.addWidget(self.input_channel_edit, row, 1)
+        self.input_channel_dd = QComboBox()
+        self.settings_layout.addWidget(self.input_channel_dd, row, 1)
 
         # Sample Rate
         row = 1
@@ -201,8 +196,8 @@ class MainUI(QWidget):
     def get_config(self):
 
         output = DEFAULT_VALUES.copy()
-        if self.input_channel_edit.text():
-            output["input_channel"] = int(self.input_channel_edit.text())
+        if self.input_channel_dd.currentText():
+            output["input_channel"] = self.input_channel_dd.currentText()
         if self.sample_rate_edit.text():
             output["sample_rate"] = float(self.sample_rate_edit.text()) * ureg.kHz
         if self.duration_edit.text():
@@ -302,6 +297,8 @@ class MainUI(QWidget):
                 f"Driver connected to {self.driver_instance.__class__.__name__}/{self.driver_instance.connected_device}"
             )
 
-        
+        # show input channel options for that device
+        self.input_channel_dd.clear()
+        self.input_channel_dd.addItems(self.driver_instance.list_ports())
 
         log.info("Connected to {}".format(self.driver_instance.connected_device))

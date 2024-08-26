@@ -38,7 +38,7 @@ class DataHandler():
                 voltages = self.voltage_data[:index+1]
             # self.frequencies, psds = welch(voltages,
             #                         fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
-            self.frequencies, psds = periodogram(self.voltage_data, 
+            self.frequencies, psds = periodogram(voltages, 
                                                  fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
             self.psd = np.mean(psds, axis=0)
             log.debug("PSD calculated until index {}".format(index))
@@ -62,9 +62,10 @@ class DataHandler():
             + f"Date: {self._config['start_time']}\n"
             + f"Input Channel: {self._config['input_channel']}\n"
             + f"Duration: {self._config['duration']}\n"
-            + f"Sample Rate: {self._config['sample_rate']}\n"
+            + f"Sample Rate: {self._config['sample_rate_real']}\n"
             + f"Averages: {self._config['averages']}\n"
-            + f"Unit for Data: {self._config['unit']}\n")
+            + f"Unit for Data: {self._config['unit']}\n"
+            + f"Signal Range: {self._config['signal_range_min_real']}, {self._config['signal_range_max_real']}")
 
         np.savetxt(self.file_path, self.voltage_data.T, 
                    delimiter="\t",

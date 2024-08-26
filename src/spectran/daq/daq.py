@@ -18,6 +18,14 @@ class DAQ(ABC):
         Returns:
             list[str]: list of names of devices
         """
+
+    @abstractmethod
+    def list_ports(self) -> list[str]:
+        """List ports picked up by self.connected_device
+
+        Returns:
+            list[str]: list of names of devices
+        """
     
     def connect_device(self, resource_name):
         """Connect to the device
@@ -55,7 +63,10 @@ import time
 class DummyDAQ(DAQ):
      
     def list_devices(self):
-        return ["Dev1", "Dev2", "Dev3"]
+        return ["Dev1", "Dev2"]
+    
+    def list_ports(self):
+        return ["ai1", "ai2", "ai3"]
     
     def get_properties(self, device):
         return super().get_properties(device)
