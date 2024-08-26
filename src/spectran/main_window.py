@@ -39,7 +39,7 @@ class MainWindow(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Spectrum Analyzer")
+        self.setWindowTitle("Spectran")
         self.setMinimumSize(800, 600)
         self.setWindowIcon(QIcon(str(spectran_path / "data/osci_128.ico")))
         
