@@ -23,6 +23,12 @@ class NISCOPE(DAQ):
 
         return output
     
+    def list_ports(self) -> list[str]:
+        with niscope.Session(self.connected_device) as session:
+            print(session.channel_count)
+            return session.get_channel_names(f"0-{session.channel_count-1}")#[c.logical_name for c in session.channels]
+
+    
     def get_properties(self, device):
         with niscope.Session(device) as session:
             max_sample_rate = session.max_real_time_sampling_rate
@@ -62,7 +68,7 @@ class NISCOPE(DAQ):
             config["sample_rate_real"] = session.horz_sample_rate
             log.debug("Sample Rate: {}".format(config["sample_rate_real"]))
             main_window.main_ui.sample_rate_status.setText(f"{config['sample_rate_real']:6g}")
-            
+
             vertical_range = session.channels[channel].vertical_range
             vertical_offset = session.channels[channel].vertical_offset
             log.debug("Range of device: {} with offset {}".format(vertical_range, 

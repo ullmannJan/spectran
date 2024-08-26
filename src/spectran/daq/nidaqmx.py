@@ -1,6 +1,7 @@
-import nidaqmx as ni
+from nidaqmx import Task
+from nidaqmx.system import System, physical_channel
 from nidaqmx.stream_readers import AnalogSingleChannelReader
-from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
+from nidaqmx.constants import READ_ALL_AVAILABLE
 import numpy as np
 
 from .. import log, ureg
@@ -10,7 +11,7 @@ class NIDAQMX(DAQ):
 
     def list_devices(self) -> list[str]:
         try:
-            local_system = ni.system.System.local()
+            local_system = System.local()
             driver_version = local_system.driver_version
             
         except Exception as e:
@@ -24,8 +25,15 @@ class NIDAQMX(DAQ):
 
         return [d.name for d in local_system.devices]
     
+    def list_ports(self) -> list[str]:
+        
+        system = System.local()
+        device = system.devices[self.connected_device]
+        # remove the device name and the slash
+        return [terminal.name.replace(self.connected_device, "")[1:] for terminal in device.ai_physical_chans]
+
     def get_properties(self, device):
-        local_system = ni.system.System.local()
+        local_system = System.local()
         device = local_system.devices[device]
         min_rate = device.ai_min_rate
         max_rate = device.ai_max_single_chan_rate
@@ -43,11 +51,11 @@ class NIDAQMX(DAQ):
         sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
         averages = config["averages"]
         
-        with ni.Task() as read_task:
+        with Task() as read_task:
             # add inputs
             log.debug(f'Starting acquisition')
 
-            aichan = read_task.ai_channels.add_ai_voltage_chan(f'{config["device"]}/ai{config["input_channel"]}')
+            aichan = read_task.ai_channels.add_ai_voltage_chan(f'{config["device"]}/{config["input_channel"]}')
             aichan.ai_min = config["signal_range_min"].to(ureg.volt).magnitude
             aichan.ai_max = config["signal_range_max"].to(ureg.volt).magnitude
         
