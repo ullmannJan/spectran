@@ -248,14 +248,13 @@ class MainUI(QWidget):
         worker = Worker(run_measurement, self.driver_instance, config, self.main_window)
         worker.signals.progress.connect(self.get_data_and_plot)
         worker.signals.error.connect(self.main_window.raise_error)
-        worker.signals.finished.connect(self.finish_measurement)
+        worker.signals.result.connect(self.finish_measurement)
         
-        worker.signals.result.connect(lambda data: self.get_data_and_plot(None, data))
-
         # Execute
         self.main_window.threadpool.start(worker)
 
-    def finish_measurement(self):
+    def finish_measurement(self, data):
+        self.get_data_and_plot(None, data)
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.main_window.stopped = True
@@ -273,7 +272,8 @@ class MainUI(QWidget):
             data (np.ndarray): array holding the voltage values
         """
         plot_worker = Worker(self.main_window.data_handler.calculate_data, data, index)
-        plot_worker.signals.finished.connect(self.main_window.plots.update_plots)
+        plot_worker.signals.finished.connect(
+            lambda: self.main_window.plots.update_plots(index=index))
         plot_worker.signals.error.connect(self.main_window.raise_error)
         self.main_window.threadpool.start(plot_worker)
 

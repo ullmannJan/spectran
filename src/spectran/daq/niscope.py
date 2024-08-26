@@ -25,7 +25,6 @@ class NISCOPE(DAQ):
     
     def list_ports(self) -> list[str]:
         with niscope.Session(self.connected_device) as session:
-            print(session.channel_count)
             return session.get_channel_names(f"0-{session.channel_count-1}")#[c.logical_name for c in session.channels]
 
     
