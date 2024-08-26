@@ -29,8 +29,8 @@ class NISCOPE(DAQ):
             return session.get_channel_names(f"0-{session.channel_count-1}")#[c.logical_name for c in session.channels]
 
     
-    def get_properties(self, device):
-        with niscope.Session(device) as session:
+    def get_properties(self):
+        with niscope.Session(self.connected_device) as session:
             max_sample_rate = session.max_real_time_sampling_rate
 
         return {"Sample rate": ("max", max_sample_rate)}

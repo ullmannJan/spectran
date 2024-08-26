@@ -37,8 +37,8 @@ class DAQ(ABC):
         return self.connected_device
     
     @abstractmethod
-    def get_properties(self, device):
-        return dict(no_props = None)
+    def get_properties(self) -> dict:
+        """Returns properties of self.connected_device in a dict"""
     
     @abstractmethod
     def get_sequence(self, data_holder:np.ndarray, 
@@ -68,8 +68,8 @@ class DummyDAQ(DAQ):
     def list_ports(self):
         return ["ai1", "ai2", "ai3"]
     
-    def get_properties(self, device):
-        return super().get_properties(device)
+    def get_properties(self):
+        return super().get_properties()
     
     def get_sequence(self, data_holder:np.ndarray,
                      average_index:int, 

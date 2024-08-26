@@ -32,9 +32,9 @@ class NIDAQMX(DAQ):
         # remove the device name and the slash
         return [terminal.name.replace(self.connected_device, "")[1:] for terminal in device.ai_physical_chans]
 
-    def get_properties(self, device):
+    def get_properties(self):
         local_system = System.local()
-        device = local_system.devices[device]
+        device = local_system.devices[self.connected_device]
         min_rate = device.ai_min_rate
         max_rate = device.ai_max_single_chan_rate
         
