@@ -1,6 +1,6 @@
-from . import log, ureg
-from PySide6.QtGui import QColor
 from PySide6.QtCore import QSettings
+from . import log, ureg
+from .api import DEFAULT_API_KEY
 
 DEFAULT_VALUES = {
     "input_channel": "",
@@ -16,7 +16,7 @@ DEFAULT_SETTINGS = {
     "graphics/style": "Fusion",
     "misc/file_extensions": [".txt", ".csv"],
     "api/host": "127.0.0.1",
-    "api/port": 8111,
+    "api/port": 8111,    
 }
 
 class Settings(QSettings):
@@ -71,13 +71,13 @@ class Settings(QSettings):
             # for boolean we need to set the type
             elif isinstance(settings.get(key), bool):
                 if self.value(key, type=bool) != settings.get(key):
-                    log.info(
+                    log.debug(
                         f"Setting not equal: {key} {self.value(key)} {settings.get(key)}"
                     )
                     return False
             # otherwise simply compare the values
             elif self.value(key) != settings.get(key):
-                log.info(
+                log.debug(
                     f"Setting not equal: {key} {self.value(key)} {settings.get(key)}"
                 )
                 return False

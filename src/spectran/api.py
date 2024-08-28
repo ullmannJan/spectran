@@ -7,9 +7,11 @@ import requests
 from time import sleep
 from . import log, ureg
 
-API_KEY = os.getenv("API_KEY", "12345678910111213")
+DEFAULT_API_KEY = "12345678910111213"
+API_KEY = os.getenv("API_KEY", DEFAULT_API_KEY)
 
 class FastAPIServer(QThread):
+    
     def __init__(self, main_window, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.main_window = main_window
@@ -17,6 +19,7 @@ class FastAPIServer(QThread):
         self.port = self.main_window.settings.value("api/port")
     
     def run(self):
+        
         oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
         app = FastAPI()
         
@@ -81,13 +84,13 @@ class FastAPIServer(QThread):
 class API_Connection():
    
     def __init__(self, 
-                 host:str = "http://127.0.0.1",
+                 host:str = "127.0.0.1",
                  port: int = 8111,
-                 api_key:str=API_KEY):
+                 api_key:str = API_KEY):
         self.api_key = api_key
         self.host = host
         self.port = port
-        self.url = f"{host}:{port}"
+        self.url = f"http://{host}:{port}"
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
         
         self.test_connection()

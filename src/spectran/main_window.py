@@ -166,5 +166,4 @@ class MainWindow(QMainWindow):
         if not app:  # If the application does not exist, create a new instance
             app = QApplication([])
         return app.palette().color(QPalette.ColorRole.Window).lightness() < 128
-
     
