@@ -39,6 +39,11 @@ class FastAPIServer(QThread):
             else:
                 return {"message": f"Measurement failed: {status}"}
             
+        @app.post("/stop_measurement", dependencies=[Depends(api_key_auth)])
+        def stop_measurement():
+            self.main_window.main_ui.stop_measurement()
+            return {"message": "Measurement stopped"}
+            
         @app.post("/config", dependencies=[Depends(api_key_auth)])
         def set_config(config:dict):
 
@@ -104,6 +109,13 @@ class API_Connection():
         """Starts the measurement with settings from the GUI.
         """
         response = requests.post(f"{self.url}/start_measurement", 
+                                 headers=self.headers)
+        log.info(response.json()["message"])
+        
+    def stop_measurement(self):
+        """Starts the measurement with settings from the GUI.
+        """
+        response = requests.post(f"{self.url}/stop_measurement", 
                                  headers=self.headers)
         log.info(response.json()["message"])
         
