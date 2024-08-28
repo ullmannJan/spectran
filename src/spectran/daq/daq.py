@@ -74,7 +74,8 @@ class DummyDAQ(DAQ):
         return ["ai1", "ai2", "ai3"]
     
     def list_term_configs(self):
-        return Enum("Test", names='RED GREEN BLUE'), 1
+        TEST = Enum("Test", names='RED GREEN BLUE')
+        return TEST, TEST.RED 
     
     def get_properties(self):
         return super().get_properties()
@@ -88,6 +89,15 @@ class DummyDAQ(DAQ):
         duration = config["duration"].to(ureg.second).magnitude
         sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
         averages = config["averages"]
+        
+         # set gui information
+        config["sample_rate_real"] = config["sample_rate"]
+        main_window.main_ui.sample_rate_status.setText(f"{config['sample_rate_real'].to(ureg.Hz).magnitude:6g}")
+
+        config["signal_range_min_real"] = config["signal_range_min"]
+        config["signal_range_max_real"] = config["signal_range_max"]
+        main_window.main_ui.range_min_status.setText(f"{config['signal_range_min_real'].to(ureg.volt).magnitude:.6g}")
+        main_window.main_ui.range_max_status.setText(f"{config['signal_range_max_real'].to(ureg.volt).magnitude:.6g}")
         
         start_time = time.time()
         # this is where the data is acquired

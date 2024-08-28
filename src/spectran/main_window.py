@@ -18,7 +18,7 @@ from . import spectran_path
 
 class MainWindow(QMainWindow):
 
-    stopped = True # The status of the measurement
+    measurement_stopped = True # The status of the measurement
 
     def __init__(self):
         super(MainWindow, self).__init__()

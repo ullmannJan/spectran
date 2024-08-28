@@ -12,7 +12,7 @@ class DataHandler():
     time_seq = None
     frequencies = None
     psd = None
-    _config = None
+    _config = dict()
 
     def __init__(self, main_window) -> None:
         self.main_window = main_window
@@ -51,13 +51,27 @@ class DataHandler():
             self.data_has_changed = True
             self.calculate_psd(index)
 
-    def save_file(self):
+    def save_file(self, file_path:str|Path=None):
+        """Saves the data to a file. If no file_path is given, a file dialog is opened.
+
+        Args:
+            file_path (str|Path, optional): where to save file. Defaults to None.
+        """
+        if not self.main_window.measurement_stopped:
+            self.main_window.raise_error("Measurement is still running. Stop it first.")            
+            return 
         
-        filename = self.save_file_dialog()
-        if filename is None:
+        if self.voltage_data is None:
+            self.main_window.raise_error("No data to save")
             return
         
-        self.file_path = Path(filename)
+        if file_path is None:
+            file_path = self.save_file_dialog()
+        if file_path is None:
+            return
+        
+        
+        self.file_path = Path(file_path)
         header_text = (f"Measurement with Driver:{self._config['driver']} on Device:{self._config['device']}\n"
             + f"Date: {self._config['start_time']}\n"
             + f"Input Channel: {self._config['input_channel']} with {self._config['terminal_config']}\n"

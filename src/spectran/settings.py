@@ -3,7 +3,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtCore import QSettings
 
 DEFAULT_VALUES = {
-    "input_channel": 0,
+    "input_channel": "",
     "sample_rate": 100_000 * ureg.Hz,
     "duration": 2 * ureg.second,
     "averages": 1,
@@ -15,6 +15,8 @@ DEFAULT_VALUES = {
 DEFAULT_SETTINGS = {
     "graphics/style": "Fusion",
     "misc/file_extensions": [".txt", ".csv"],
+    "api/host": "127.0.0.1",
+    "api/port": 8111,
 }
 
 class Settings(QSettings):

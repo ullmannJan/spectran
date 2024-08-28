@@ -3,6 +3,7 @@
 from PySide6.QtWidgets import QApplication
 import warnings
 import sys
+from .api import FastAPIServer
 from .main_window import MainWindow
 from . import __version__
 
@@ -28,7 +29,9 @@ def run(level=logging.INFO, format="%(asctime)s  %(levelname)-10s %(name)s: %(me
     w = MainWindow()
     sys.excepthook = lambda *args: exception_hook(w, *args)
     warnings.showwarning = warning_handler
+    api_thread = FastAPIServer(w)
     w.show()
+    api_thread.start()
     app.exec()
 
 
