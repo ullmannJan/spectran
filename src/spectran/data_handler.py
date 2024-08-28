@@ -77,9 +77,9 @@ class DataHandler():
             + f"Input Channel: {self._config['input_channel']} with {self._config['terminal_config']}\n"
             + f"Duration: {self._config['duration']}\n"
             + f"Sample Rate: {self._config['sample_rate_real']}\n"
-            + f"Signal Range: {self._config['signal_range_min_real']}, {self._config['signal_range_max_real']}"
+            + f"Signal Range: {self._config['signal_range_min_real']}, {self._config['signal_range_max_real']}\n"
             + f"Averages: {self._config['averages']}\n"
-            + f"Unit of Data: {self._config['unit']}\n\n"
+            + f"Unit of Data: {self._config['unit']}\n"
             )
 
         np.savetxt(self.file_path, self.voltage_data.T, 

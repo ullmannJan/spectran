@@ -63,6 +63,13 @@ class FastAPIServer(QThread):
         @app.post("/running", dependencies=[Depends(api_key_auth)])
         def running():
             return {"message": not self.main_window.measurement_stopped}
+        
+        @app.post("/connect_device", dependencies=[Depends(api_key_auth)])
+        def connect_device(json:dict):
+            driver = json["driver"]
+            device = json["device"]
+            self.main_window.main_ui.connect_device_manual(driver, device)
+            return {"message": f"Connected to {driver} on {device}"}
          
         uvicorn.run(app, host=self.host, port=self.port)
 
@@ -140,7 +147,23 @@ class API_Connection():
             response = requests.post(f"{self.url}/running", 
                                  headers=self.headers)
             if response.status_code == 200:
-                if response.json()["message"]:
-                    running = False
+                # returns True if it is still runnning
+                running = response.json()["message"]
                 
             sleep(update_interval)
+        
+        log.info("Measurement finished")
+            
+    def connect_device(self, driver:str, device:str):
+        """Connect to the device with the given driver.
+
+        Args:
+            driver (str): Name of the driver to connect to.
+            device (str): Name of the device to connect to.
+        """
+        response = requests.post(f"{self.url}/connect_device", 
+                                 headers=self.headers,
+                                 json={"driver": driver,
+                                       "device": device})
+        
+        log.info(response.json()['message'])

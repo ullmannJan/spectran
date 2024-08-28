@@ -79,7 +79,7 @@ class MainUI(QWidget):
         # Connect Button
         self.connect_button = QPushButton("Connect")
         driver_layout.addWidget(self.connect_button, 2, 0, 1, 1)
-        self.connect_button.clicked.connect(self.connect_device)
+        self.connect_button.clicked.connect(self.connect_device_automatic)
 
         # Show properties button
         self.properties_button = QPushButton("Show Properties")
@@ -230,7 +230,7 @@ class MainUI(QWidget):
                 
                 if isinstance(input_field, QLineEdit):
                     input_field.setText(str(value))
-                elif isinstance(value, QComboBox):
+                elif isinstance(input_field, QComboBox):
                     input_field.setCurrentText(str(value))
             # if it is something else, update the config
             else:
@@ -263,6 +263,15 @@ class MainUI(QWidget):
 
         return output
     
+    def set_driver(self, driver:str) -> DAQ:
+        index = [daq.__name__ for daq in DAQs].index(driver)
+        if index == -1:
+            raise ValueError("Driver not found")
+        self.driver_dd.setCurrentText(driver)
+        return DAQs[index]()
+    
+    def set_device(self, device:str):
+        self.device_dd.setCurrentText(device)
     # def set_input_channel(self, input_channel:str):
     #     self.input_channel_dd.setCurrentText(input_channel)
     # def set_terminal_config(self, terminal_config:str):
@@ -308,6 +317,7 @@ class MainUI(QWidget):
         self.main_window.plots.clear_plots()
         
         config = self.read_config()
+        print(config)
         self.main_window.data_handler.config = config
         
         self.start_button.setEnabled(False)
@@ -349,13 +359,23 @@ class MainUI(QWidget):
         driver_instance = DAQs[self.driver_dd.currentIndex()]()
         self.device_dd.clear()
         self.device_dd.addItems(driver_instance.list_devices())
+        
+    def connect_device_manual(self, driver, device):
+        driver = self.set_driver(driver)
+        self.set_device(device)
+        self.driver_instance = driver
+        self.driver_instance.connected_device = device
+        self.connect_device()
 
-    def connect_device(self):
+    def connect_device_automatic(self):
         self.driver_instance = DAQs[self.driver_dd.currentIndex()]()
         if not self.device_dd.currentText():
             raise ValueError("No device selected")
         
         self.driver_instance.connect_device(self.device_dd.currentText())
+        self.connect_device()
+    
+    def connect_device(self):
         # change Text
         if self.driver_instance.connected_device is None:
             self.driver_gbox.setTitle("Driver Settings")
