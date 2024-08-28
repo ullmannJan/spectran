@@ -4,6 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import uvicorn
 import requests
+from time import sleep
 from . import log, ureg
 
 API_KEY = os.getenv("API_KEY", "12345678910111213")
@@ -55,11 +56,14 @@ class FastAPIServer(QThread):
             return {"message": f"Configuration {config}"}
         
         @app.post("/save_file", dependencies=[Depends(api_key_auth)])
-        def save_file(file_path:dict):
-            print(file_path)
-            self.main_window.data_handler.save_file(file_path) 
-            return {"message": f"File saved to {file_path}"}
-           
+        def save_file(json:dict):
+            self.main_window.data_handler.save_file(json["file_path"]) 
+            return {"message": f"File saved to {json['file_path']}"}
+          
+        @app.post("/running", dependencies=[Depends(api_key_auth)])
+        def running():
+            return {"message": not self.main_window.measurement_stopped}
+         
         uvicorn.run(app, host=self.host, port=self.port)
 
 class API_Connection():
@@ -129,11 +133,14 @@ class API_Connection():
                                  json={"file_path": file_path})
         log.info(f"Saved file to {file_path} with {response.json()['message']}")
 
-    # def wait_for_measurement(self):
-    #     """Wait for the measurement to finish."""
-    #     done = False
-    #     while done:
-    #         response = requests.post(f"{self.url}/running", 
-    #                              headers=self.headers)
-    #         if response.status_code == 200:
-    #             done = True
+    def wait_for_measurement(self, update_interval:float = 0.1):
+        """Wait for the measurement to finish."""
+        running = True
+        while running:
+            response = requests.post(f"{self.url}/running", 
+                                 headers=self.headers)
+            if response.status_code == 200:
+                if response.json()["message"]:
+                    running = False
+                
+            sleep(update_interval)

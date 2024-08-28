@@ -73,7 +73,10 @@ class SaveWindow(Window):
         self.layout.addWidget(self.saveButton)
 
     def save(self):
-        return self.parent.data_handler.save_file()
+        path = self.parent.data_handler.save_file()
+        if path:
+            self.close()
+        return
 
 
 class AboutWindow(Window):

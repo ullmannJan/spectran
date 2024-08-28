@@ -77,9 +77,9 @@ class DataHandler():
             + f"Input Channel: {self._config['input_channel']} with {self._config['terminal_config']}\n"
             + f"Duration: {self._config['duration']}\n"
             + f"Sample Rate: {self._config['sample_rate_real']}\n"
-            + f"Averages: {self._config['averages']}\n"
-            + f"Unit for Data: {self._config['unit']}\n"
             + f"Signal Range: {self._config['signal_range_min_real']}, {self._config['signal_range_max_real']}"
+            + f"Averages: {self._config['averages']}\n"
+            + f"Unit of Data: {self._config['unit']}\n\n"
             )
 
         np.savetxt(self.file_path, self.voltage_data.T, 
@@ -88,10 +88,7 @@ class DataHandler():
         
         # self.main_window.statusBar().showMessage(f"Data saved to {self.file_path}")
         log.info("Data saved to {}".format(self.file_path))
-        self.main_window.save_window.close()
-
-        # raise NotImplementedError("Saving data not implemented yet")
-
+        return self.file_path
     
     def save_file_dialog(
         self, file_name="output.dat", extensions="Data-File (*.dat *.txt);;All Files (*)"
