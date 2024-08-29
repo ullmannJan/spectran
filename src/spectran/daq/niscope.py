@@ -60,7 +60,7 @@ class NISCOPE(DAQ):
             session.channels[channel].channel_terminal_configuration = config["terminal_config"]
             session.channels[channel].configure_vertical(range=v_range,
                                                          offset=v_offset,
-                                                         coupling=niscope.VerticalCoupling.AC)
+                                                         coupling=niscope.VerticalCoupling.DC)
             session.configure_horizontal_timing(min_sample_rate=sample_rate, 
                                                 min_num_pts=int(sample_rate*duration), 
                                                 num_records=1, 

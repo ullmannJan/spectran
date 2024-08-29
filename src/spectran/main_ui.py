@@ -82,7 +82,7 @@ class MainUI(QWidget):
         self.connect_button.clicked.connect(self.connect_device_automatic)
 
         # Show properties button
-        self.properties_button = QPushButton("Show Properties")
+        self.properties_button = QPushButton("Edit Device Properties")
         driver_layout.addWidget(self.properties_button, 2, 1, 1, 1)
         self.properties_button.clicked.connect(self.show_device_properties)
         # TODO: it needs to be implemented that this button can not be pressed during measurement
