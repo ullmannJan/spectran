@@ -1,4 +1,4 @@
-# Spectran 
+# Spectran
 
 ![Spectran Logo](./src/spectran/data/osci_128.ico)
 
