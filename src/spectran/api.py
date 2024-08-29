@@ -1,4 +1,3 @@
-import os
 from PySide6.QtCore import QThread
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -8,13 +7,13 @@ from time import sleep
 from . import log, ureg
 
 DEFAULT_API_KEY = "12345678910111213"
-API_KEY = os.getenv("API_KEY", DEFAULT_API_KEY)
 
 class FastAPIServer(QThread):
     
-    def __init__(self, main_window, *args, **kwargs):
+    def __init__(self, main_window, api_key=DEFAULT_API_KEY, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.main_window = main_window
+        self.api_key = api_key
         self.host = self.main_window.settings.value("api/host")
         self.port = self.main_window.settings.value("api/port")
     
@@ -24,7 +23,7 @@ class FastAPIServer(QThread):
         app = FastAPI()
         
         async def api_key_auth(api_key: str = Depends(oauth2_scheme)):
-            if api_key != API_KEY:
+            if api_key != self.api_key:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, 
                     detail="Could not validate credentials"
@@ -82,11 +81,16 @@ class FastAPIServer(QThread):
         uvicorn.run(app, host=self.host, port=self.port)
 
 class API_Connection():
-   
+    """This class handles the connection to the API Server.
+
+    Raises:
+        ConnectionError: If the connection to the API Server fails
+    """
+       
     def __init__(self, 
                  host:str = "127.0.0.1",
                  port: int = 8111,
-                 api_key:str = API_KEY):
+                 api_key:str = DEFAULT_API_KEY):
         self.api_key = api_key
         self.host = host
         self.port = port
@@ -94,6 +98,19 @@ class API_Connection():
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
         
         self.test_connection()
+
+    @staticmethod
+    def response_handling(response):
+        """Handle the response from the API Server."""
+        if response.status_code == 200:
+            return response.json()["message"]
+        else:
+            if "detail" in response.json():
+                error = response.json()["detail"]
+            else: 
+                error = response.json()
+            log.error(error)
+            raise ConnectionError(error)
         
     def test_connection(self):
         """Tests the connection to the API Server
@@ -101,26 +118,23 @@ class API_Connection():
         Raises:
             ConnectionError: If the connection to the API Server fails
         """
-        response = requests.post(f"{self.url}/alive", 
+        r = requests.post(f"{self.url}/alive", 
                                  headers=self.headers)
-        if response.status_code == 200:
-            log.info("Connection established: {}".format(response.json()["message"]))
-        else:
-            raise ConnectionError("Connection to API Server failed")
+        self.response_handling(r)
         
     def start_measurement(self):
         """Starts the measurement with settings from the GUI.
         """
-        response = requests.post(f"{self.url}/start_measurement", 
+        r = requests.post(f"{self.url}/start_measurement", 
                                  headers=self.headers)
-        log.info(response.json()["message"])
+        log.info(self.response_handling(r))
         
     def stop_measurement(self):
         """Starts the measurement with settings from the GUI.
         """
-        response = requests.post(f"{self.url}/stop_measurement", 
+        r = requests.post(f"{self.url}/stop_measurement", 
                                  headers=self.headers)
-        log.info(response.json()["message"])
+        log.info(self.response_handling(r))
         
     def set_config(self, config:dict):
         """Sets GUI configuration with the given dictionary.
@@ -139,10 +153,11 @@ class API_Connection():
             return {k: convert_value(v) for k, v in d.items()}
         
         config_converted = convert_config_to_serial_dict(config)
-        response = requests.post(f"{self.url}/config", 
+        r = requests.post(f"{self.url}/config", 
                                  headers=self.headers,
                                  json=config_converted)
-        log.info(f"Configured Measurements with {response.json()['message']}")
+        message = self.response_handling(r)
+        log.info("Configured Measurements with {}".format(message))
         
     def save_file(self, file_path:str, **save_kwargs):
         """Save data to a file with the given filename.
@@ -150,20 +165,21 @@ class API_Connection():
         Args:
             file_path (str): Filename where to save the data.
         """
-        response = requests.post(f"{self.url}/save_file", 
+        r = requests.post(f"{self.url}/save_file", 
                                  headers=self.headers,
                                  json={"file_path": file_path})
-        log.info(f"Saved file to {file_path} with {response.json()['message']}")
+        message = self.response_handling(r)
+        log.info("Saved file to {} with {}".format(file_path, message))
 
     def wait_for_measurement(self, update_interval:float = 0.1):
         """Wait for the measurement to finish."""
         running = True
         while running:
-            response = requests.post(f"{self.url}/running", 
+            r = requests.post(f"{self.url}/running", 
                                  headers=self.headers)
-            if response.status_code == 200:
+            if r.status_code == 200:
                 # returns True if it is still runnning
-                running = response.json()["message"]
+                running = self.response_handling(r)
                 
             sleep(update_interval)
         
@@ -176,9 +192,8 @@ class API_Connection():
             driver (str): Name of the driver to connect to.
             device (str): Name of the device to connect to.
         """
-        response = requests.post(f"{self.url}/connect_device", 
+        r = requests.post(f"{self.url}/connect_device", 
                                  headers=self.headers,
                                  json={"driver": driver,
                                        "device": device})
-        
-        log.info(response.json()['message'])
+        log.info(self.response_handling(r))

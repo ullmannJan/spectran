@@ -8,7 +8,6 @@ logging.basicConfig(
 
 if __name__ == "__main__":
     api = API_Connection()
-    
     CONFIG = {
         "input_channel": "ai0",
         "sample_rate": 50_000 * ureg.Hz,

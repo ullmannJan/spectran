@@ -1,6 +1,5 @@
 from PySide6.QtCore import QSettings
 from . import log, ureg
-from .api import DEFAULT_API_KEY
 
 DEFAULT_VALUES = {
     "input_channel": "",

@@ -22,8 +22,6 @@ from . import __version__ as spectran_version
 from . import spectran_path
 from .settings import Settings, DEFAULT_SETTINGS
 from . import log
-from .api import DEFAULT_API_KEY, API_KEY
-
 
 class Window(QWidget):
     """
@@ -119,7 +117,7 @@ class SettingsWindow(Window):
         self.tab_widget.addTab(self.graphics, "Graphics")
         self.tab_widget.addTab(self.api, "API")
         self.tab_widget.addTab(self.misc, "Misc")
-        self.tab_widget.setMinimumSize(350, 200)
+        self.tab_widget.setMinimumSize(300, 200)
 
         self.create_graphics_ui()
         self.create_api_ui()
@@ -198,7 +196,7 @@ class SettingsWindow(Window):
         self.api_key = QLineEdit(self)
         self.api_key.setToolTip("The API Key can be changed in the environment variable API_KEY.")
         self.api_key.setReadOnly(True)
-        self.api_key.setText(API_KEY)
+        self.api_key.setText(self.parent.api_server.api_key)
         self.api_grid.addWidget(self.api_key, 2, 1)
         
         self.api_label = QLabel("Spectran needs to restart for\nthese changes to take effect!", self)

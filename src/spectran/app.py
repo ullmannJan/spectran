@@ -1,16 +1,18 @@
 """This module contains functions to run the program."""
 
 from PySide6.QtWidgets import QApplication
-import warnings
-import sys
-from .api import FastAPIServer
-from .main_window import MainWindow
-from . import __version__
-
+import sys, os, warnings
 import logging
+from .api import FastAPIServer, DEFAULT_API_KEY
+from .main_window import MainWindow
+from . import __version__, log
+
 
 def run(level=logging.INFO, format="%(asctime)s  %(levelname)-10s %(name)s: %(message)s", **logging_kwargs):
 
+    api_key = os.getenv("API_KEY",DEFAULT_API_KEY)
+    log.info("API_KEY set to {}".format(api_key))
+        
     if level is not None:
         logging.basicConfig(
             level=level,
@@ -29,8 +31,9 @@ def run(level=logging.INFO, format="%(asctime)s  %(levelname)-10s %(name)s: %(me
     w = MainWindow()
     sys.excepthook = lambda *args: exception_hook(w, *args)
     warnings.showwarning = warning_handler
-    api_thread = FastAPIServer(w)
+    api_thread = FastAPIServer(w, api_key=api_key)
     w.show()
+    w.api_server = api_thread
     api_thread.start()
     app.exec()
 
