@@ -11,12 +11,14 @@ class Plots(pg.GraphicsLayoutWidget):
         self.main_window = main_window
 
         self.addItem(pg.LabelItem("Signal", justify="center", size="large"), col=0)
+        self.coords_plot1 = pg.LabelItem(text="x = 0, y = 0", justify="right", color="w")
+        self.addItem(self.coords_plot1, col=0)
         self.nextRow()
         self.plot1 = self.addPlot()
         self.nextRow()
         self.addItem(pg.LabelItem("PSD", justify="center", size="large"), col=0)
-        self.label = pg.LabelItem(justify="right", color="w")
-        self.addItem(self.label, col=0)
+        self.coords_plot2 = pg.LabelItem(text="x = 0, y = 0", justify="right", color="w")
+        self.addItem(self.coords_plot2, col=0)
         self.nextRow()
         self.plot2 = self.addPlot()
 
@@ -38,11 +40,16 @@ class Plots(pg.GraphicsLayoutWidget):
 
     def on_mouse_move(self, event):
         pos = event[0]
+        if self.plot1.sceneBoundingRect().contains(pos):
+            mousePoint = self.plot1.vb.mapSceneToView(pos)
+            x = 10 ** mousePoint.x() if self.plot1.ctrl.logXCheck.isChecked() else mousePoint.x()
+            y = 10 ** mousePoint.y() if self.plot1.ctrl.logYCheck.isChecked() else mousePoint.y()
+            self.coords_plot1.setText(f"x = {x:.3e}, y = {y:.3e}")
         if self.plot2.sceneBoundingRect().contains(pos):
             mousePoint = self.plot2.vb.mapSceneToView(pos)
             x = 10 ** mousePoint.x() if self.plot2.ctrl.logXCheck.isChecked() else mousePoint.x()
             y = 10 ** mousePoint.y() if self.plot2.ctrl.logYCheck.isChecked() else mousePoint.y()
-            self.label.setText(f"x = {x:.3e}, y = {y:.3e}")
+            self.coords_plot2.setText(f"x = {x:.3e}, y = {y:.3e}")
 
     def update_plots(self, index=None):
         
