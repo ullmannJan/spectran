@@ -2,7 +2,7 @@
 
 ![Spectran Logo](./src/spectran/data/osci_128.ico)
 
-A simple spectrum analyzer. Read a voltage signal and do a spectral analysis.
+A simple spectrum analyzer. Read a voltage signal and perform a spectral analysis.
 
 ![grafik](https://github.com/user-attachments/assets/a88ff48f-7647-4640-8144-1de5429cf95c)
 
