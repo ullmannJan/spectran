@@ -55,10 +55,8 @@ CONFIG = {
     "unit": "Volt",
 }
 api.set_config(CONFIG)    
-```
 
-Finally, start the measurement (or several)
-```python
+# start the measurement
 api.start_measurement()
 # this waits for the measurement to finish
 api.wait_for_measurement()
