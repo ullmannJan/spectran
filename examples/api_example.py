@@ -7,7 +7,12 @@ logging.basicConfig(
         )
 
 if __name__ == "__main__":
+    # connect to the API Server
+    # the api_key has to be specified 
+    # if it is not the DEFAULT_API_KEY
     api = API_Connection()
+    
+    # create a configuration dictionary
     CONFIG = {
         "input_channel": "ai0",
         "sample_rate": 50_000 * ureg.Hz,
@@ -18,12 +23,21 @@ if __name__ == "__main__":
         "unit": "Volt",
     }
     
+    # connect to a device, it is the same as selecting 
+    # the device in the GUI and clicking connect
     api.connect_device("DummyDAQ", 'Dev1')
+    # this sets all parameters in the GUI
     api.set_config(CONFIG)    
+    
+    # make 7 measurements
     for i in range(1, 8):
+        # each with a different sample rate
         api.set_config(dict(sample_rate=500_000*i * ureg.Hz))
+        # start the measurement
         api.start_measurement()
+        # this waits for the measurement to finish
         api.wait_for_measurement()
-        # api.save_file(f"a_{i}.txt")
+        # save the measured data to a file
+        api.save_file(f"data_{i}.txt")
     
     
