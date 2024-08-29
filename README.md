@@ -32,11 +32,13 @@ This connects the device.
 
 ## API Connection
 
-It is possible to remotely control most of Spectran's features via an API. Default Host is `127.0.0.1` on port `8111`.
+It is possible to remotely control most of Spectran's features via an API. 
+API key can be set with the environment variable `API_KEY`.
+Default host is `127.0.0.1` on port `8111`.
 
 A detailed example can be found in [this example](./examples/api_example.py).
 
-First, the connection to the API has to be set up:
+First, the connection to the API has to be set up (you might have to input your api key):
 ```python
 api = API_Connection()
 ```
