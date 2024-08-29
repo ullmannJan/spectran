@@ -8,17 +8,16 @@ from PySide6.QtCore import Qt, QThreadPool, QMetaObject, Q_ARG, Slot
 from PySide6.QtGui import QIcon, QAction, QPalette
 import sys
 
-from . import log
 from .plots import Plots
 from .main_ui import MainUI
 from .data_handler import DataHandler
 from .settings import Settings
 from .windows import AboutWindow, SettingsWindow, SaveWindow
-from . import spectran_path
+from . import spectran_path, log
 
 class MainWindow(QMainWindow):
 
-    stopped = True # The status of the measurement
+    measurement_stopped = True # The status of the measurement
 
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -27,6 +26,7 @@ class MainWindow(QMainWindow):
         self.plots = Plots(self)
         self.main_ui = MainUI(self)
         self.data_handler = DataHandler(self)
+        self.api_server = None
 
         # qt stuff
         self.threadpool = QThreadPool.globalInstance()
@@ -166,5 +166,4 @@ class MainWindow(QMainWindow):
         if not app:  # If the application does not exist, create a new instance
             app = QApplication([])
         return app.palette().color(QPalette.ColorRole.Window).lightness() < 128
-
     

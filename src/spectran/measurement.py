@@ -27,7 +27,7 @@ def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_call
 
     try:
         for i in range(averages):
-            if main_window.stopped:
+            if main_window.measurement_stopped:
                 log.info("Measurement stopped")
                 main_window.statusBar().showMessage("Measurement aborted")
                 # return the data that has been measured

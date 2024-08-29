@@ -17,6 +17,8 @@ dependencies = [
     'niscope',
     'nisyscfg',
     'nidaqmx',
+    'fastapi',
+    'uvicorn',
     'importlib-metadata; python_version<"3.11"',
 ]
 

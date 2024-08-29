@@ -1,6 +1,7 @@
 # absolute imports
 from PySide6.QtWidgets import (
     QVBoxLayout,
+    QGridLayout,
     QLabel,
     QWidget,
     QGroupBox,
@@ -14,14 +15,13 @@ from PySide6.QtWidgets import (
     QStyleFactory,
     QHeaderView,
 )
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QRegularExpressionValidator
 
 # relative imports
 from . import __version__ as spectran_version
 from . import spectran_path
 from .settings import Settings, DEFAULT_SETTINGS
 from . import log
-
 
 class Window(QWidget):
     """
@@ -73,7 +73,10 @@ class SaveWindow(Window):
         self.layout.addWidget(self.saveButton)
 
     def save(self):
-        return self.parent.data_handler.save_file()
+        path = self.parent.data_handler.save_file()
+        if path:
+            self.close()
+        return
 
 
 class AboutWindow(Window):
@@ -108,13 +111,16 @@ class SettingsWindow(Window):
         self.main_layout.addWidget(self.tab_widget)
 
         self.graphics = QWidget()
+        self.api = QWidget()
         self.misc = QWidget()
 
         self.tab_widget.addTab(self.graphics, "Graphics")
+        self.tab_widget.addTab(self.api, "API")
         self.tab_widget.addTab(self.misc, "Misc")
-        self.tab_widget.setMinimumSize(350, 200)
+        self.tab_widget.setMinimumSize(300, 200)
 
         self.create_graphics_ui()
+        self.create_api_ui()
         self.create_misc_ui()
 
         # Resize the window to fit the contents of the tabs
@@ -156,6 +162,47 @@ class SettingsWindow(Window):
         self.misc_layout.addLayout(self.file_extensions_layout)
 
         self.misc_layout.addStretch()
+        
+    def create_api_ui(self):
+        
+        self.api_layout = QVBoxLayout()
+        self.api.setLayout(self.api_layout)
+
+        self.api_grid = QGridLayout()
+        self.api_layout.addLayout(self.api_grid)
+        
+        self.host_label = QLabel("Host", self)
+        self.api_grid.addWidget(self.host_label, 0, 0)
+        self.host = QLineEdit(self)
+        ValidHostnameRegex = r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
+        self.host.setValidator(QRegularExpressionValidator(ValidHostnameRegex, self))
+        self.host.setPlaceholderText("127.0.0.1")
+        self.host.setText(self.settings.value("api/host"))
+        self.host.textChanged.connect(self.update_window)
+        self.api_grid.addWidget(self.host, 0, 1)
+
+        self.port_label = QLabel("Port", self)
+        self.api_grid.addWidget(self.port_label, 1, 0)
+        self.port = QLineEdit(self)
+        port_regex = r"^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$"
+        self.port.setValidator(QRegularExpressionValidator(port_regex, self))
+        self.port.setPlaceholderText("8111")
+        self.port.setText(str(self.settings.value("api/port")))
+        self.port.textChanged.connect(self.update_window)
+        self.api_grid.addWidget(self.port, 1, 1)
+        
+        self.api_key_label = QLabel("API KEY", self)
+        self.api_grid.addWidget(self.api_key_label, 2, 0)
+        self.api_key = QLineEdit(self)
+        self.api_key.setToolTip("The API Key can be changed in the environment variable API_KEY.")
+        self.api_key.setReadOnly(True)
+        self.api_key.setText(self.parent.api_server.api_key)
+        self.api_grid.addWidget(self.api_key, 2, 1)
+        
+        self.api_label = QLabel("Spectran needs to restart for\nthese changes to take effect!", self)
+        self.api_grid.addWidget(self.api_label, 3, 0, 1, 2)
+        
+        self.api_layout.addStretch()
 
     def create_graphics_ui(self):
         """Create the UI for the settings window."""
@@ -186,8 +233,14 @@ class SettingsWindow(Window):
 
         self.graphics_style_dd.setCurrentText(settings.get("graphics/style"))
 
+        host = settings.get("api/host")
+        port = settings.get("api/port")
+        self.host.setText(host)
+        self.port.setText(str(port))
+        
         file_ext_string = ";".join(settings.get("misc/file_extensions"))
         self.file_extensions.setText(file_ext_string)
+        
         self.update_window()
 
     def reset_to_defaults(self):
@@ -207,6 +260,8 @@ class SettingsWindow(Window):
         return {
             "graphics/style": self.graphics_style_dd.currentText(),
             "misc/file_extensions": self.file_extensions.text().split(";"),
+            "api/host": self.host.text() if self.host.text() else DEFAULT_SETTINGS["api/host"],
+            "api/port": int(self.port.text()) if self.port.text() else DEFAULT_SETTINGS["api/port"],
         }
 
     def save(self):

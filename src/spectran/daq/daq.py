@@ -74,7 +74,8 @@ class DummyDAQ(DAQ):
         return ["ai1", "ai2", "ai3"]
     
     def list_term_configs(self):
-        return Enum("Test", names='RED GREEN BLUE'), 1
+        TEST = Enum("Test", names='RED GREEN BLUE')
+        return TEST, TEST.RED 
     
     def get_properties(self):
         return super().get_properties()
@@ -85,26 +86,36 @@ class DummyDAQ(DAQ):
                      main_window,
                      plotting_signal:Signal):
         
+        start_time = time.time()
         duration = config["duration"].to(ureg.second).magnitude
         sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
         averages = config["averages"]
         
-        start_time = time.time()
+         # set gui information
+        config["sample_rate_real"] = config["sample_rate"]
+        main_window.main_ui.sample_rate_status.setText(f"{config['sample_rate_real'].to(ureg.Hz).magnitude:6g}")
+
+        config["signal_range_min_real"] = config["signal_range_min"]
+        config["signal_range_max_real"] = config["signal_range_max"]
+        main_window.main_ui.range_min_status.setText(f"{config['signal_range_min_real'].to(ureg.volt).magnitude:.6g}")
+        main_window.main_ui.range_max_status.setText(f"{config['signal_range_max_real'].to(ureg.volt).magnitude:.6g}")
+        
         # this is where the data is acquired
         data_holder[average_index] = self.acquire(duration, sample_rate)
+        end_time = time.time()
         
-        if average_index % 1 == 0:
-            log.info(f"Emit at {average_index+1}/{averages} - {(time.time()-start_time)*1e3:.2f} ms")
-            plotting_signal.emit(average_index, data_holder)
-        else:
-            log.info(f"Updating at {average_index+1}/{averages} - {(time.time()-start_time)*1e3:.2f} ms")
-
+        # simulate length
+        waiting_time = duration - (end_time - start_time)
+        if waiting_time > 0:
+            time.sleep(waiting_time)
+        
+        log.info(f"Emit at {average_index+1}/{averages} - {(time.time()-start_time)*1e3:.2f} ms")
+        plotting_signal.emit(average_index, data_holder)
         
     def acquire(self, duration, sample_rate) -> np.ndarray:
         """A wrapper function to simulate data acquisition. 
         You don't need to use such a function in your implementation.
-        """
-        
+        """        
         t = np.linspace(0, duration, int(duration * sample_rate))
         num_freqs = 100
         rand = 1e6 * np.sort(np.random.random(num_freqs))

@@ -21,7 +21,6 @@ from .settings import DEFAULT_VALUES
 from .daq import DAQs, DAQ
 from .measurement import Worker, run_measurement
 
-
 class MainUI(QWidget):
 
     driver_instance: DAQ = None
@@ -30,6 +29,8 @@ class MainUI(QWidget):
         super().__init__(*args, **kwargs)
 
         self.main_window = main_window
+        # dictionary to hold all input fields with units, if there are any
+        self.input_fields = {}
 
         self.setMinimumWidth(300)
         self.setMaximumWidth(350)
@@ -66,17 +67,19 @@ class MainUI(QWidget):
         # Driver
         driver_layout.addWidget(QLabel("Driver: "), 0, 0)
         self.driver_dd = QComboBox()
+        self.input_fields["driver"] = self.driver_dd
         driver_layout.addWidget(self.driver_dd, 0, 1)
 
         # Device
         driver_layout.addWidget(QLabel("Device: "), 1, 0)
         self.device_dd = QComboBox()
+        self.input_fields["device"] = self.device_dd
         driver_layout.addWidget(self.device_dd, 1, 1)
         
         # Connect Button
         self.connect_button = QPushButton("Connect")
         driver_layout.addWidget(self.connect_button, 2, 0, 1, 1)
-        self.connect_button.clicked.connect(self.connect_device)
+        self.connect_button.clicked.connect(self.connect_device_automatic)
 
         # Show properties button
         self.properties_button = QPushButton("Show Properties")
@@ -102,12 +105,14 @@ class MainUI(QWidget):
         row = 0
         self.settings_layout.addWidget(QLabel("Input Channel: "), row, 0)
         self.input_channel_dd = QComboBox()
+        self.input_fields["input_channel"] = self.input_channel_dd
         self.settings_layout.addWidget(self.input_channel_dd, row, 1)
 
         # Input Channel
         row += 1
         self.settings_layout.addWidget(QLabel("Terminal Configuration: "), row, 0)
         self.terminal_mode_dd = QComboBox()
+        self.input_fields["terminal_config"] = self.terminal_mode_dd
         self.settings_layout.addWidget(self.terminal_mode_dd, row, 1)
 
         # Sample Rate
@@ -116,6 +121,7 @@ class MainUI(QWidget):
         self.sample_rate_edit = QLineEdit(
             placeholderText=str(DEFAULT_VALUES["sample_rate"].to(ureg.kHz).magnitude)
         )
+        self.input_fields["sample_rate"] = self.sample_rate_edit, ureg.kHz
         self.sample_rate_edit.setValidator(
             QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self)
         )
@@ -128,6 +134,7 @@ class MainUI(QWidget):
         self.duration_edit = QLineEdit(
             placeholderText=str(DEFAULT_VALUES["duration"].to(ureg.second).magnitude)
         )
+        self.input_fields["duration"] = self.duration_edit, ureg.second
         self.duration_edit.setValidator(
             QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self)
         )
@@ -138,6 +145,7 @@ class MainUI(QWidget):
         row += 1
         self.settings_layout.addWidget(QLabel("Averages: "), row, 0)
         self.averages_edit = QLineEdit(placeholderText=str(DEFAULT_VALUES["averages"]))
+        self.input_fields["averages"] = self.averages_edit
         self.averages_edit.setValidator(QRegularExpressionValidator(r"^\d+$", self))
         self.settings_layout.addWidget(self.averages_edit, row, 1)
 
@@ -149,12 +157,14 @@ class MainUI(QWidget):
         self.range_min_edit = QLineEdit(
             placeholderText=str(DEFAULT_VALUES["signal_range_min"].to(ureg.volt).magnitude)
         )
+        self.input_fields["signal_range_min"] = self.range_min_edit, ureg.volt
         self.range_min_edit.setValidator(
             QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self)
         )
         self.range_max_edit = QLineEdit(
             placeholderText=str(DEFAULT_VALUES["signal_range_max"].to(ureg.volt).magnitude)
         )
+        self.input_fields["signal_range_max"] = self.range_max_edit, ureg.volt
         self.range_max_edit.setValidator(
             QRegularExpressionValidator(r"^[+-]?(\d+(\.\d*)?|\.\d+)$", self)
         )
@@ -199,8 +209,38 @@ class MainUI(QWidget):
 
         self.status_layout = QGridLayout()
         status_gbox.setLayout(self.status_layout)
-
-    def get_config(self):
+        
+    def set_config(self, config: dict):
+        """Set the configuration dictionary to the UI
+        
+        Args:
+            config (dict): configuration dictionary
+        """
+        if config is None:
+            return
+        for key, value in config.items():
+            # when it is an input field, update gui
+            if key in self.input_fields:
+                # when it is a quantity, convert it to the right unit
+                if isinstance(value, ureg.Quantity):
+                    input_field, unit = self.input_fields[key]
+                    value = value.to(unit).magnitude
+                else:
+                    input_field = self.input_fields[key]
+                
+                if isinstance(input_field, QLineEdit):
+                    input_field.setText(str(value))
+                elif isinstance(input_field, QComboBox):
+                    input_field.setCurrentText(str(value))
+            # if it is something else, update the config
+            else:
+                self.config[key] = value
+    
+    @property
+    def config(self):
+        return self.main_window.data_handler._config
+    
+    def read_config(self):
 
         output = DEFAULT_VALUES.copy()
         if self.input_channel_dd.currentText():
@@ -223,6 +263,29 @@ class MainUI(QWidget):
 
         return output
     
+    def set_driver(self, driver:str) -> DAQ:
+        index = [daq.__name__ for daq in DAQs].index(driver)
+        if index == -1:
+            raise ValueError("Driver not found")
+        self.driver_dd.setCurrentText(driver)
+        return DAQs[index]()
+    
+    def set_device(self, device:str):
+        self.device_dd.setCurrentText(device)
+    # def set_input_channel(self, input_channel:str):
+    #     self.input_channel_dd.setCurrentText(input_channel)
+    # def set_terminal_config(self, terminal_config:str):
+    #     self.terminal_mode_dd.setCurrentText(terminal_config)
+    # def set_sample_rate(self, sample_rate:float):
+    #     self.sample_rate_status.setText(str(sample_rate))
+    # def set_duration(self, duration:float):
+    #     self.duration_edit.setText(str(duration))
+    # def set_averages(self, averages:int):
+    #     self.averages_edit.setText(str(averages))
+    # def set_signal_range(self, signal_range_min:float, signal_range_max:float):
+    #     self.range_min_status.setText(str(signal_range_min))
+    #     self.range_max_status.setText(str(signal_range_max))
+    
     def show_device_properties(self, ):
         if self.driver_instance and self.driver_instance.connected_device:
             self.properties_page = PropertiesWindow(parent=self, driver=self.driver_instance)
@@ -231,24 +294,30 @@ class MainUI(QWidget):
     
     def stop_measurement(self):
         self.main_window.threadpool.clear()
-        self.main_window.stopped = True
+        self.main_window.measurement_stopped = True
         self.stop_button.setEnabled(False)
         self.start_button.setEnabled(True)
 
-    def start_measurement(self):
+    def start_measurement(self) -> None|str:
+        """Function that is called, when one clicks on start measurement.
         
-
+        It starts the measurement in a separate thread.
+        """
+        if not self.main_window.measurement_stopped:
+            return "Measurement already running"
+        
         if self.driver_instance is None:
             self.main_window.raise_error("No driver selected")
-            return
+            return "No driver selected"
         if self.driver_instance.connected_device is None:
             self.main_window.raise_error("No device connected")
-            return
+            return "No device connected"
         
-        self.main_window.stopped = False
+        self.main_window.measurement_stopped = False
         self.main_window.plots.clear_plots()
         
-        config = self.get_config()
+        config = self.read_config()
+        print(config)
         self.main_window.data_handler.config = config
         
         self.start_button.setEnabled(False)
@@ -260,12 +329,12 @@ class MainUI(QWidget):
         
         # Execute
         self.main_window.threadpool.start(worker)
-
+        
     def finish_measurement(self, data):
         self.get_data_and_plot(None, data)
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
-        self.main_window.stopped = True
+        self.main_window.measurement_stopped = True
 
         # add to statusbar
         if self.main_window.statusBar().currentMessage() != "Measurement aborted":
@@ -290,13 +359,23 @@ class MainUI(QWidget):
         driver_instance = DAQs[self.driver_dd.currentIndex()]()
         self.device_dd.clear()
         self.device_dd.addItems(driver_instance.list_devices())
+        
+    def connect_device_manual(self, driver, device):
+        driver = self.set_driver(driver)
+        self.set_device(device)
+        self.driver_instance = driver
+        self.driver_instance.connected_device = device
+        self.connect_device()
 
-    def connect_device(self):
+    def connect_device_automatic(self):
         self.driver_instance = DAQs[self.driver_dd.currentIndex()]()
         if not self.device_dd.currentText():
             raise ValueError("No device selected")
         
         self.driver_instance.connect_device(self.device_dd.currentText())
+        self.connect_device()
+    
+    def connect_device(self):
         # change Text
         if self.driver_instance.connected_device is None:
             self.driver_gbox.setTitle("Driver Settings")
@@ -309,11 +388,11 @@ class MainUI(QWidget):
         self.input_channel_dd.clear()
         self.input_channel_dd.addItems(self.driver_instance.list_ports())
         # show modes for input channel
-        self.update_mode_dd()
+        self.update_term_config_dd()
 
         log.info("Connected to {}".format(self.driver_instance.connected_device))
 
-    def update_mode_dd(self):
+    def update_term_config_dd(self):
         # show modes for input channel
         self.terminal_mode_dd.clear()
         enums, default = self.driver_instance.list_term_configs()

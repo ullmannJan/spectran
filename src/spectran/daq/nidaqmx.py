@@ -73,19 +73,19 @@ class NIDAQMX(DAQ):
                 samps_per_chan=int(sample_rate*duration),
             )
 
-            # Log the actual settings
-            log.info("AI Min: {} V".format(aichan.ai_min))
-            log.info("AI Max: {} V".format(aichan.ai_max))
-            log.info("Sample Rate: {} Hz".format(read_task.timing.samp_clk_rate))
 
-             # set gui information
-            config["sample_rate_real"] = read_task.timing.samp_clk_rate
+            # Log the actual settings
+            config["sample_rate_real"] = read_task.timing.samp_clk_rate * ureg.Hz
+            log.info("Sample Rate: {} Hz".format(read_task.timing.samp_clk_rate))
             main_window.main_ui.sample_rate_status.setText(f"{config['sample_rate_real']:6g}")
 
-            config["signal_range_min_real"] = aichan.ai_min
-            config["signal_range_max_real"] = aichan.ai_max
-            main_window.main_ui.range_min_status.setText(f"{config['signal_range_min_real']:.6g}")
-            main_window.main_ui.range_max_status.setText(f"{config['signal_range_max_real']:.6g}")
+            # set gui information
+            config["signal_range_min_real"] = aichan.ai_min * ureg.volt
+            config["signal_range_max_real"] = aichan.ai_max * ureg.volt
+            log.info("AI Min: {}".format(config["signal_range_min_real"]))
+            log.info("AI Max: {}".format(config["signal_range_max_real"]))
+            main_window.main_ui.range_min_status.setText(f"{config['signal_range_min_real'].to(ureg.volt).magnitude:.6g}")
+            main_window.main_ui.range_max_status.setText(f"{config['signal_range_max_real'].to(ureg.volt).magnitude:.6g}")
 
             reader = AnalogSingleChannelReader(task_in_stream=read_task.in_stream)
 
