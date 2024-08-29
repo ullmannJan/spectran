@@ -44,7 +44,7 @@ class Plots(pg.GraphicsLayoutWidget):
             mousePoint = self.plot1.vb.mapSceneToView(pos)
             x = 10 ** mousePoint.x() if self.plot1.ctrl.logXCheck.isChecked() else mousePoint.x()
             y = 10 ** mousePoint.y() if self.plot1.ctrl.logYCheck.isChecked() else mousePoint.y()
-            self.coords_plot1.setText(f"x = {x:.3e}, y = {y:.3e}")
+            self.coords_plot1.setText(f"x = {x:.3g}, y = {y:.3g}")
         if self.plot2.sceneBoundingRect().contains(pos):
             mousePoint = self.plot2.vb.mapSceneToView(pos)
             x = 10 ** mousePoint.x() if self.plot2.ctrl.logXCheck.isChecked() else mousePoint.x()
