@@ -1,0 +1,27 @@
+name: create release
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+  workflow_dispatch:
+
+jobs:
+    create-release:
+      permissions:
+        contents: write
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: Create release and upload artifacts
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            tag="${GITHUB_REF#refs/tags/}"
+            gh release create "$tag" \
+            --title="$tag" \
+            --draft \
+          shell: bash
