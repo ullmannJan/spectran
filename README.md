@@ -59,11 +59,11 @@ api.set_config(CONFIG)
 
 Finally, start the measurement (or several)
 ```python
-    api.start_measurement()
-    # this waits for the measurement to finish
-    api.wait_for_measurement()
-    # this saves the data to a file
-    api.save_file(f"data.txt")
+api.start_measurement()
+# this waits for the measurement to finish
+api.wait_for_measurement()
+# this saves the data to a file
+api.save_file(f"data.txt")
 ```
 
 ## Development
