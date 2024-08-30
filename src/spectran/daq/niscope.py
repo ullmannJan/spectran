@@ -86,7 +86,7 @@ class NISCOPE(DAQ):
            # start measurement
             with session.initiate():
                 log.debug(f'Starting acquisition')                
-                waveforms = session.channels[channel].fetch_into(waveform=data_holder[average_index], 
+                waveforms = session.channels[channel].fetch_into(waveform=data_holder, 
                                                                  num_records=1,
                                                                  timeout=duration*2
                                                                 )

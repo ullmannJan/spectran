@@ -54,7 +54,7 @@ class DAQ(ABC):
         """Get data from DAQ device
 
         Args:
-            data_holder (np.ndarray): array to store data
+            data_holder (np.ndarray): array to store data, one-dimensional
             average_index (int): index of average
             config (dict): configuration dictionary
             plotting_signal (Signal): signal to emit when to plot. 
@@ -101,7 +101,7 @@ class DummyDAQ(DAQ):
         main_window.main_ui.range_max_status.setText(f"{config['signal_range_max_real'].to(ureg.volt).magnitude:.6g}")
         
         # this is where the data is acquired
-        data_holder[average_index] = self.acquire(duration, sample_rate)
+        data_holder = self.acquire(duration, sample_rate)
         end_time = time.time()
         
         # simulate length

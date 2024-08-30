@@ -89,7 +89,7 @@ class NIDAQMX(DAQ):
 
             reader = AnalogSingleChannelReader(task_in_stream=read_task.in_stream)
 
-            reader.read_many_sample(data=data_holder[average_index],
+            reader.read_many_sample(data=data_holder,
                                     number_of_samples_per_channel=int(sample_rate*duration),
                                     timeout=2*duration)
             

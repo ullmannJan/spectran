@@ -7,12 +7,16 @@ import numpy as np
 from PySide6.QtCore import Signal, Slot, QObject
 from datetime import datetime
 
-def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_callback:Signal):
+def run_measurement(driver_instance:DAQ, 
+                    config:dict, 
+                    main_window, 
+                    progress_callback:Signal) -> int:
     """
     Start a measurement with the current configuration
     and writes into voltage_data inplace.
     """
     log.info("Starting Measurement")
+    main_window.main_ui.stop_plotting = False
     
     duration = config["duration"].to(ureg.second).magnitude
     sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
@@ -22,16 +26,19 @@ def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_call
     log.info("Getting sequence from {} for {} s at {} Hz".format(device, duration, sample_rate))
     main_window.statusBar().showMessage(f"Measurement in progress (0 / {averages})")
 
-    # create space for data
-    voltage_data = np.empty((averages, int(duration * sample_rate)))
-
     try:
+        assert int(duration * sample_rate) > 2, "Duration too short for the sample rate"
+        main_window.data_handler.initialize(averages, duration, sample_rate)
+
+        
         for i in range(averages):
+            voltage_data = np.empty(int(duration * sample_rate))
+            
             if main_window.measurement_stopped:
                 log.info("Measurement stopped")
+                main_window.data_handler.cut_data(i)
                 main_window.statusBar().showMessage("Measurement aborted")
-                # return the data that has been measured
-                return voltage_data[:i]
+                return 
             
             # normal operation
             main_window.statusBar().showMessage(f"Measurement in progress ({i+1} / {averages})")
@@ -46,8 +53,8 @@ def run_measurement(driver_instance:DAQ, config:dict, main_window, progress_call
         main_window.statusBar().showMessage("Measurement failed")
         main_window.main_ui.stop_measurement()
         raise e
-        
-    return voltage_data
+    
+    return  
 
 
 class WorkerSignals(QObject):

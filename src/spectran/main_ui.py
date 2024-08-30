@@ -363,8 +363,12 @@ class MainUI(QWidget):
         # Execute
         self.main_window.threadpool.start(worker)
         
-    def finish_measurement(self, data):
-        self.get_data_and_plot(None, data)
+    def finish_measurement(self):
+        # TODO: stop all plotting and plot final data
+        self.stop_plotting = True
+        self.get_data_and_plot(None, None)
+        
+        # self.plot
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.main_window.measurement_stopped = True
@@ -381,7 +385,8 @@ class MainUI(QWidget):
             index (int): index of averages that was just collected
             data (np.ndarray): array holding the voltage values
         """
-        if self.main_window.measurement_stopped or not self.main_window.main_ui.plot_spectrum_cb.isChecked():
+        if self.main_window.measurement_stopped:
+            log.debug("Wanted to plot data at index {}, but measurement was stopped".format(index))
             return
         
         plot_worker = Worker(self.main_window.data_handler.calculate_data, data, index)

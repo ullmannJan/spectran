@@ -53,19 +53,21 @@ class Plots(pg.GraphicsLayoutWidget):
 
     def update_plots(self, index=None):
         
+        log.debug("Updating plots to index {}".format(index))
+        
+        if self.main_window.main_ui.stop_plotting and index is not None:
+            log.debug("Stop plotting at index {}".format(index))
+            return
+                
         if index is None:
             index = -1
-        log.debug("Updating plots with index {}".format(index))
-
-        if self.main_window.data_handler.data_has_changed:
-            self.main_window.data_handler.data_has_changed = False
-
-            data = self.main_window.data_handler.voltage_data
-
-            self.update_signal_plot(
-                self.main_window.data_handler.time_seq, 
-                data[index,:]
-            )
+        
+        self.update_signal_plot(
+            self.main_window.data_handler.time_seq, 
+            self.main_window.data_handler.voltage_data[index,:]
+        )
+        
+        if self.main_window.data_handler.psd is not None:
             self.update_spectrum_plot(
                 # we don't plot the first frequency (0 Hz)
                 self.main_window.data_handler.frequencies[1:],

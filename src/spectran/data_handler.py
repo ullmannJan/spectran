@@ -8,7 +8,7 @@ from pathlib import Path
 class DataHandler():
 
     voltage_data = None
-    data_has_changed = False
+    done_indices:set = set() # set of indices that have been calculated
     time_seq = None
     frequencies = None
     psd = None
@@ -32,24 +32,64 @@ class DataHandler():
             int(self._config["duration"].to(ureg.second).magnitude * self._config["sample_rate"].to(ureg.Hz).magnitude))
 
     def calculate_psd(self, index):
-            if index is None:
-                voltages = self.voltage_data
-            else:
-                voltages = self.voltage_data[:index+1]
-            # self.frequencies, psds = welch(voltages,
-            #                         fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
-            self.frequencies, psds = periodogram(voltages, 
-                                                 fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
-            self.psd = np.mean(psds, axis=0)
-            log.debug("PSD calculated until index {}".format(index))
-            
-            return self.frequencies, self.psd
+        # if index is None, calculate the psd for all averages
+        # but only if the psd has not been calculated yet 
+        n = len(self.done_indices)
         
-    def calculate_data(self, data, index, progress_callback):
+        # if the user wants to stop plotting, calculate the psd for all averages
+        if self.main_window.main_ui.stop_plotting:
+            if index is not None:
+                log.debug("Abort calculating PSD")
+                return
+            else:
+                log.debug("Plot summary")
+                n = self.voltage_data.shape[0]
+        
+        # if all have been calculated       
+        if n == self.voltage_data.shape[0]:
+            # calculate psds for all averages at the end
+            self.frequencies, self.psds = periodogram(self.voltage_data, 
+                                                fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
+            self.psd = np.mean(self.psds, axis=0)
+            index = self.psds.shape[0]-1
+            
+            log.debug("All PSDs calculated")
+            
+        else:
+            # calculate the psd for current index
+            if self.main_window.main_ui.plot_spectrum_cb.isChecked():
+                self.frequencies, self.psds[index] = periodogram(self.voltage_data[index], 
+                                                    fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
+                # calculate the average from previous psd
+                if index is not None:
+                    self.done_indices.add(index)
+                
+                # iterative average
+                self.psd = self.psd * (n / (n+1)) + self.psds[index] / (n+1)
+
+            log.debug("PSD calculated at index {}".format(index))
+
+        return self.frequencies, self.psd
+
+    def initialize(self, averages, duration, sample_rate):
+        self.voltage_data = np.empty((averages, int(duration * sample_rate)))
+        self.psds = np.empty(((averages, int(duration * sample_rate)//2+1)))
+        self.psd = np.zeros((int(duration * sample_rate)//2+1))
+        self.done_indices = set()
+        
+    def calculate_data(self, data:np.ndarray, index:int, progress_callback):
+        """Calculates the PSD of the data and stores it in the 
+        psd attribute.
+
+        Args:
+            data (np.ndarray): one dimensional array of data 
+                if data is None, only the psd is calculated
+            index (int): average index of data
+            progress_callback (Signal): _description_
+        """
         if data is not None:
-            self.voltage_data = data
-            self.data_has_changed = True
-            self.calculate_psd(index)
+            self.voltage_data[index] = data
+        self.calculate_psd(index)
 
     def save_file(self, file_path:str|Path=None):
         """Saves the data to a file. If no file_path is given, a file dialog is opened.
@@ -98,4 +138,14 @@ class DataHandler():
         )
         if filename:
             return filename
+        
+    def cut_data(self, index):
+        """cuts data self.voltage_data[:index] and self.psds[:index]
+
+        Args:
+            index (_type_): _description_
+        """
+        if self.voltage_data.shape[0] > index+1:
+            self.voltage_data = self.voltage_data[:index]
+            self.psds = self.psds[:index]
         
