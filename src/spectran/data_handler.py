@@ -39,7 +39,7 @@ class DataHandler():
         # if the user wants to stop plotting, calculate the psd for all averages
         if self.main_window.main_ui.stop_plotting:
             if index is not None:
-                log.debug("Abort calculating PSD")
+                log.debug("Abort calculating PSD at index {}".format(index))
                 return
             else:
                 log.debug("calculate PSD for all averages")
@@ -72,6 +72,10 @@ class DataHandler():
         return self.frequencies, self.psd
 
     def initialize(self, averages, duration, sample_rate):
+        self.voltage_data = None
+        self.psds = None
+        self.psd = None
+        
         self.voltage_data = np.empty((averages, int(duration * sample_rate)))
         self.psds = np.empty(((averages, int(duration * sample_rate)//2+1)))
         self.psd = np.zeros((int(duration * sample_rate)//2+1))
