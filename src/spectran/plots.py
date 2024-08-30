@@ -75,20 +75,20 @@ class Plots(pg.GraphicsLayoutWidget):
                 np.sqrt(self.main_window.data_handler.psd[1:]),
             )
 
-    def update_signal_plot(self, x, y):
+    def update_signal_plot(self, x, y, force_draw=False):
         # clear the plot
         self.plot1.clear()
         
-        if self.main_window.main_ui.plot_signal_cb.isChecked():        
+        if force_draw or self.main_window.main_ui.plot_signal_cb.isChecked():        
             # plot the new data
             self.plot1.plot(x, y,
                             pen=pg.mkPen(width=.5, color="w"))
 
-    def update_spectrum_plot(self, x, y):
+    def update_spectrum_plot(self, x, y, force_draw=False):
         # clear the plot
         self.plot2.clear()
         # plot the new data
-        if self.main_window.main_ui.plot_spectrum_cb.isChecked():
+        if force_draw or self.main_window.main_ui.plot_spectrum_cb.isChecked():
             self.plot2.plot(x, y,
                             pen=pg.mkPen(width=.5, color="w"))
                 

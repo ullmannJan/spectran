@@ -230,6 +230,9 @@ class MainUI(QWidget):
         self.plot_signal_cb.setChecked(True)
         self.plot_signal_cb.setToolTip("Plot signal diagram only if this is enabled. Disable for faster measurements.")
         self.plot_layout.addWidget(self.plot_signal_cb, row, 1)
+        self.plot_signal_button = QPushButton("Plot Signal")
+        self.plot_signal_button.clicked.connect(self.plot_signal)
+        self.plot_layout.addWidget(self.plot_signal_button, row, 2)
         
         row += 1
         self.plot_layout.addWidget(QLabel("Plot Spectrum: "), row, 0)
@@ -238,9 +241,31 @@ class MainUI(QWidget):
         self.plot_spectrum_cb.setChecked(True)
         self.plot_spectrum_cb.setToolTip("Plot spectrum diagram only if this is enabled. Disable for faster measurements.")
         self.plot_layout.addWidget(self.plot_spectrum_cb, row, 1)
+        self.plot_spectrum_button = QPushButton("Plot Spectrum")
+        self.plot_spectrum_button.clicked.connect(self.plot_spectrum)
+        self.plot_layout.addWidget(self.plot_spectrum_button, row, 2)
 
         self.plot_layout = QGridLayout()
         plot_gbox.setLayout(self.plot_layout)
+        
+    def plot_signal(self):
+        if self.main_window.data_handler.voltage_data is None:
+            self.main_window.raise_error("No data to plot")
+            return
+        
+        t = self.main_window.data_handler.time_seq
+        v = self.main_window.data_handler.voltage_data[-1]
+        self.main_window.plots.update_signal_plot(t, v, force_draw=True)
+    
+    def plot_spectrum(self):
+        if (self.main_window.data_handler.psd is None 
+            or self.main_window.data_handler.frequencies is None):
+            self.main_window.raise_error("No data to plot")
+            return
+
+        f = self.main_window.data_handler.frequencies[1:]
+        p = np.sqrt(self.main_window.data_handler.psd[1:])
+        self.main_window.plots.update_spectrum_plot(f, p, force_draw=True)
         
     def set_config(self, config: dict):
         """Set the configuration dictionary to the UI
