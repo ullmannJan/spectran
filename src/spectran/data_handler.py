@@ -42,7 +42,7 @@ class DataHandler():
                 log.debug("Abort calculating PSD")
                 return
             else:
-                log.debug("Plot summary")
+                log.debug("calculate PSD for all averages")
                 n = self.voltage_data.shape[0]
         
         # if all have been calculated       

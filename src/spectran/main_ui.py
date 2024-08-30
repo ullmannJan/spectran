@@ -368,6 +368,8 @@ class MainUI(QWidget):
         self.stop_plotting = True
         self.get_data_and_plot(None, None)
         
+        log.info("Measurement finished")
+        
         # self.plot
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
