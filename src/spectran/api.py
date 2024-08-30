@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordBearer
 import uvicorn
 import requests
 from time import sleep
+from pathlib import Path
 from . import log, ureg
 
 DEFAULT_API_KEY = "12345678910111213"
@@ -165,9 +166,10 @@ class API_Connection():
         Args:
             file_path (str): Filename where to save the data.
         """
+        file_path = Path(file_path).resolve()
         r = requests.post(f"{self.url}/save_file", 
                                  headers=self.headers,
-                                 json={"file_path": file_path})
+                                 json={"file_path": str(file_path)})
         message = self.response_handling(r)
         log.info("Saved file to {} with {}".format(file_path, message))
 
