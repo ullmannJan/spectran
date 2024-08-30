@@ -67,7 +67,8 @@ class Plots(pg.GraphicsLayoutWidget):
             self.main_window.data_handler.voltage_data[index,:]
         )
         
-        if self.main_window.data_handler.psd is not None:
+        if (self.main_window.data_handler.psd is not None
+            and self.main_window.data_handler.frequencies is not None):
             self.update_spectrum_plot(
                 # we don't plot the first frequency (0 Hz)
                 self.main_window.data_handler.frequencies[1:],
