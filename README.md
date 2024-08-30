@@ -4,7 +4,7 @@
 
 A simple spectrum analyzer. Read a voltage signal and perform a spectral analysis.
 
-![grafik](https://github.com/user-attachments/assets/a88ff48f-7647-4640-8144-1de5429cf95c)
+![grafik](https://github.com/user-attachments/assets/6917819c-a2b9-45ae-9df2-e16f22534c90)
 
 ## Usage
 
