@@ -56,7 +56,8 @@ class NISCOPE(DAQ):
         with niscope.Session(resource_name=device) as session:
             v_range = config["signal_range_max"].to(ureg.volt).magnitude - config["signal_range_min"].to(ureg.volt).magnitude
             v_offset = (config["signal_range_max"].to(ureg.volt).magnitude + config["signal_range_min"].to(ureg.volt).magnitude) / 2
-
+            log.debug("Range: {} V with offset {} V".format(v_range, v_offset))
+            
             session.channels[channel].channel_terminal_configuration = config["terminal_config"]
             session.channels[channel].configure_vertical(range=v_range,
                                                          offset=v_offset,

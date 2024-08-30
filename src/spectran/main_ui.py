@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QComboBox,
     QHBoxLayout,
+    QCheckBox
 )
 
 from PySide6.QtGui import QRegularExpressionValidator
@@ -43,6 +44,8 @@ class MainUI(QWidget):
         self.add_settings_box()
 
         self.add_status_box()
+        
+        self.add_plot_box()
 
         self.layout.addStretch()
         
@@ -210,6 +213,35 @@ class MainUI(QWidget):
         self.status_layout = QGridLayout()
         status_gbox.setLayout(self.status_layout)
         
+    def add_plot_box(self):
+
+        # Channel Settings
+        plot_gbox = QGroupBox("Plotting")
+        self.layout.addWidget(plot_gbox)
+
+        self.plot_layout = QGridLayout()
+        plot_gbox.setLayout(self.plot_layout)
+
+        # Sample Rate
+        row = 0
+        self.plot_layout.addWidget(QLabel("Plot Signal: "), row, 0)
+        self.plot_signal_cb = QCheckBox(self)
+        self.input_fields["plot_signal"] = self.plot_signal_cb
+        self.plot_signal_cb.setChecked(True)
+        self.plot_signal_cb.setToolTip("Plot signal diagram only if this is enabled. Disable for faster measurements.")
+        self.plot_layout.addWidget(self.plot_signal_cb, row, 1)
+        
+        row += 1
+        self.plot_layout.addWidget(QLabel("Plot Spectrum: "), row, 0)
+        self.plot_spectrum_cb = QCheckBox(self)
+        self.input_fields["plot_spectrum"] = self.plot_spectrum_cb
+        self.plot_spectrum_cb.setChecked(True)
+        self.plot_spectrum_cb.setToolTip("Plot spectrum diagram only if this is enabled. Disable for faster measurements.")
+        self.plot_layout.addWidget(self.plot_spectrum_cb, row, 1)
+
+        self.plot_layout = QGridLayout()
+        plot_gbox.setLayout(self.plot_layout)
+        
     def set_config(self, config: dict):
         """Set the configuration dictionary to the UI
         
@@ -232,6 +264,8 @@ class MainUI(QWidget):
                     input_field.setText(str(value))
                 elif isinstance(input_field, QComboBox):
                     input_field.setCurrentText(str(value))
+                elif isinstance(input_field, QCheckBox):
+                    input_field.setChecked(value)
             # if it is something else, update the config
             else:
                 self.config[key] = value
@@ -325,8 +359,7 @@ class MainUI(QWidget):
         worker = Worker(run_measurement, self.driver_instance, config, self.main_window)
         worker.signals.progress.connect(self.get_data_and_plot)
         worker.signals.error.connect(self.main_window.raise_error)
-        worker.signals.result.connect(self.finish_measurement)
-        
+        worker.signals.result.connect(self.finish_measurement)        
         # Execute
         self.main_window.threadpool.start(worker)
         
@@ -348,6 +381,9 @@ class MainUI(QWidget):
             index (int): index of averages that was just collected
             data (np.ndarray): array holding the voltage values
         """
+        if self.main_window.measurement_stopped or not self.main_window.main_ui.plot_spectrum_cb.isChecked():
+            return
+        
         plot_worker = Worker(self.main_window.data_handler.calculate_data, data, index)
         plot_worker.signals.finished.connect(
             lambda: self.main_window.plots.update_plots(index=index))

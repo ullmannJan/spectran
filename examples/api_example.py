@@ -10,7 +10,7 @@ if __name__ == "__main__":
     # connect to the API Server
     # the api_key has to be specified 
     # if it is not the DEFAULT_API_KEY
-    api = API_Connection()
+    api = API_Connection(api_key="3824392043")
     
     # create a configuration dictionary
     CONFIG = {
@@ -21,6 +21,7 @@ if __name__ == "__main__":
         "signal_range_min": -3 * ureg.volt, 
         "signal_range_max":  3 * ureg.volt,
         "unit": "Volt",
+        "plot_signal": False,
     }
     
     # connect to a device, it is the same as selecting 

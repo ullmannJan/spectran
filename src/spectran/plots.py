@@ -75,16 +75,19 @@ class Plots(pg.GraphicsLayoutWidget):
     def update_signal_plot(self, x, y):
         # clear the plot
         self.plot1.clear()
-        # plot the new data
-        self.plot1.plot(x, y,
-                        pen=pg.mkPen(width=.5, color="w"))
+        
+        if self.main_window.main_ui.plot_signal_cb.isChecked():        
+            # plot the new data
+            self.plot1.plot(x, y,
+                            pen=pg.mkPen(width=.5, color="w"))
 
     def update_spectrum_plot(self, x, y):
         # clear the plot
         self.plot2.clear()
         # plot the new data
-        self.plot2.plot(x, y,
-                        pen=pg.mkPen(width=.5, color="w"))
+        if self.main_window.main_ui.plot_spectrum_cb.isChecked():
+            self.plot2.plot(x, y,
+                            pen=pg.mkPen(width=.5, color="w"))
                 
     def clear_plots(self):
         self.plot1.clear()
