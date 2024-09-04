@@ -47,8 +47,12 @@ class DataHandler():
         
         # if all have been calculated       
         if n == self.voltage_data.shape[0]:
-            # calculate psds for all averages at the end
-            self.frequencies, self.psds = periodogram(self.voltage_data, 
+            # calculate psds for all averages that have not been calculated at the end
+            undone_idxs = list(set(range(self.voltage_data.shape[0]))-self.done_indices)
+            if not undone_idxs:
+                log.debug("Nothing undone")
+                return self.frequencies, self.psd
+            self.frequencies, self.psds[undone_idxs] = periodogram(self.voltage_data[undone_idxs], 
                                                 fs=self._config["sample_rate"].to(ureg.Hz).magnitude)
             self.psd = np.mean(self.psds, axis=0)
             index = self.psds.shape[0]-1
@@ -72,6 +76,7 @@ class DataHandler():
         return self.frequencies, self.psd
 
     def initialize(self, averages, duration, sample_rate):
+        # delete old data
         self.voltage_data = None
         self.psds = None
         self.psd = None
@@ -93,7 +98,8 @@ class DataHandler():
         """
         if data is not None:
             self.voltage_data[index] = data
-        self.calculate_psd(index)
+        if self.main_window.main_ui.plot_spectrum_cb.isChecked():
+            self.calculate_psd(index)
 
     def save_file(self, file_path:str|Path=None):
         """Saves the data to a file. If no file_path is given, a file dialog is opened.
