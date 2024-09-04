@@ -72,7 +72,7 @@ class Plots(pg.GraphicsLayoutWidget):
             self.update_spectrum_plot(
                 # we don't plot the first frequency (0 Hz)
                 self.main_window.data_handler.frequencies[1:],
-                np.sqrt(self.main_window.data_handler.psd[1:]),
+                self.main_window.data_handler.psd[1:],
             )
 
     def update_signal_plot(self, x, y, force_draw=False):

@@ -264,7 +264,7 @@ class MainUI(QWidget):
             return
 
         f = self.main_window.data_handler.frequencies[1:]
-        p = np.sqrt(self.main_window.data_handler.psd[1:])
+        p = self.main_window.data_handler.psd[1:]
         self.main_window.plots.update_spectrum_plot(f, p, force_draw=True)
         
     def set_config(self, config: dict):
