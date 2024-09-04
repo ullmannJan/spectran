@@ -86,7 +86,7 @@ class DataHandler():
         self.psd = np.zeros((int(duration * sample_rate)//2+1))
         self.done_indices = set()
         
-    def calculate_data(self, data:np.ndarray, index:int, progress_callback):
+    def calculate_data(self, index:int, progress_callback):
         """Calculates the PSD of the data and stores it in the 
         psd attribute.
 
@@ -96,8 +96,8 @@ class DataHandler():
             index (int): average index of data
             progress_callback (Signal): _description_
         """
-        if data is not None:
-            self.voltage_data[index] = data
+        # if data is not None:
+        #     self.voltage_data[index] = data
         if self.main_window.main_ui.plot_spectrum_cb.isChecked():
             self.calculate_psd(index)
 

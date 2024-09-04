@@ -95,7 +95,7 @@ class NIDAQMX(DAQ):
             
             log.info(f"{average_index+1}/{averages} done.")
 
-        plotting_signal.emit(average_index, data_holder)
+        plotting_signal.emit(average_index)
 
             
 

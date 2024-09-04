@@ -32,13 +32,14 @@ def run_measurement(driver_instance:DAQ,
 
         
         for i in range(averages):
-            voltage_data = np.empty(int(duration * sample_rate))
+            # voltage_data = np.empty(int(duration * sample_rate))
+            voltage_data = main_window.data_handler.voltage_data[i]
             
             if main_window.measurement_stopped:
                 log.info("Measurement stopped")
                 main_window.data_handler.cut_data(i)
                 main_window.statusBar().showMessage("Measurement aborted")
-                return 
+                return i
             
             # normal operation
             main_window.statusBar().showMessage(f"Measurement in progress ({i+1} / {averages})")
@@ -54,7 +55,7 @@ def run_measurement(driver_instance:DAQ,
         main_window.main_ui.stop_measurement()
         raise e
     
-    return  
+    return averages
 
 
 class WorkerSignals(QObject):
@@ -79,7 +80,7 @@ class WorkerSignals(QObject):
     finished = Signal()
     error = Signal(tuple)
     result = Signal(object)
-    progress = Signal(int, object)
+    progress = Signal(int)
 
 
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject

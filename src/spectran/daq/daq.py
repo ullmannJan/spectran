@@ -101,7 +101,7 @@ class DummyDAQ(DAQ):
         main_window.main_ui.range_max_status.setText(f"{config['signal_range_max_real'].to(ureg.volt).magnitude:.6g}")
         
         # this is where the data is acquired
-        data_holder = self.acquire(duration, sample_rate)
+        data_holder[:] = self.acquire(duration, sample_rate)
         end_time = time.time()
         
         # simulate length
@@ -110,7 +110,7 @@ class DummyDAQ(DAQ):
             time.sleep(waiting_time)
         
         log.info(f"Emit at {average_index+1}/{averages} - {(time.time()-start_time)*1e3:.2f} ms")
-        plotting_signal.emit(average_index, data_holder)
+        plotting_signal.emit(average_index)
         
     def acquire(self, duration, sample_rate) -> np.ndarray:
         """A wrapper function to simulate data acquisition. 

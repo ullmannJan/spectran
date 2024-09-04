@@ -388,12 +388,12 @@ class MainUI(QWidget):
         # Execute
         self.main_window.threadpool.start(worker)
         
-    def finish_measurement(self):
+    def finish_measurement(self, length:int):
         # TODO: stop all plotting and plot final data
         self.stop_plotting = True
-        self.get_data_and_plot(None, None)
+        self.get_data_and_plot(None)
         
-        log.info("Measurement finished")
+        log.info("Measurement finished with {} averages".format(length))
         
         # self.plot
         self.start_button.setEnabled(True)
@@ -404,7 +404,7 @@ class MainUI(QWidget):
         if self.main_window.statusBar().currentMessage() != "Measurement aborted":
             self.main_window.statusBar().showMessage("Ready for measurement")
         
-    def get_data_and_plot(self, index:int, data:np.ndarray):
+    def get_data_and_plot(self, index:int):
         """Collects data and calculates the PSD. Then plots it.
         Computations are done in a separate thread.
         
@@ -416,7 +416,7 @@ class MainUI(QWidget):
             log.debug("Wanted to plot data at index {}, but measurement was stopped".format(index))
             return
         
-        plot_worker = Worker(self.main_window.data_handler.calculate_data, data, index)
+        plot_worker = Worker(self.main_window.data_handler.calculate_data, index)
         plot_worker.signals.finished.connect(
             lambda: self.main_window.plots.update_plots(index=index))
         plot_worker.signals.error.connect(self.main_window.raise_error)

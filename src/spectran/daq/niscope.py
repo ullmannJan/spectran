@@ -98,4 +98,4 @@ class NISCOPE(DAQ):
             log.info(f"{average_index+1}/{averages} done.")
     
         if plotting_signal is not None:
-            plotting_signal.emit(average_index, data_holder)
+            plotting_signal.emit(average_index)
