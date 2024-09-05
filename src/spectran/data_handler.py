@@ -88,7 +88,7 @@ class DataHandler():
         
     def calculate_data(self, index:int, progress_callback):
         """Calculates the PSD of the data and stores it in the 
-        psd attribute.
+        psd attribute only if the plotting of psd is enabled.
 
         Args:
             data (np.ndarray): one dimensional array of data 
@@ -96,8 +96,6 @@ class DataHandler():
             index (int): average index of data
             progress_callback (Signal): _description_
         """
-        # if data is not None:
-        #     self.voltage_data[index] = data
         if self.main_window.main_ui.plot_spectrum_cb.isChecked():
             self.calculate_psd(index)
 
@@ -141,7 +139,7 @@ class DataHandler():
         return self.file_path
     
     def save_file_dialog(
-        self, file_name="output.dat", extensions="Data-File (*.dat *.txt);;All Files (*)"
+        self, file_name="output.txt", extensions="Data-File (*.dat *.txt);;All Files (*)"
     ):
         filename, _ = QFileDialog.getSaveFileName(
             self.main_window.main_ui, "Save", file_name, extensions

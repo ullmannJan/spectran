@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
             "About",
             self,
         )
-        aboutAction.setStatusTip("Show information about Measury")
+        aboutAction.setStatusTip("Show information about Spectran")
         aboutAction.triggered.connect(self.open_about_page)
         
         # menu bar
