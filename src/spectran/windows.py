@@ -15,8 +15,11 @@ from PySide6.QtWidgets import (
     QTabWidget,
     QStyleFactory,
     QHeaderView,
+    QStatusBar,
+    QDialog,
 )
 from PySide6.QtGui import QIcon, QRegularExpressionValidator
+from PySide6.QtCore import Qt
 
 # relative imports
 from . import __version__ as spectran_version
@@ -33,8 +36,6 @@ class Window(QWidget):
 
     def __init__(self, parent, title="Window"):
         super().__init__()
-        # this makes the main application unresponsive while using this window
-        # self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
         self.parent = parent
 
@@ -53,16 +54,43 @@ class Window(QWidget):
             self.parent.setFocus()
             self.parent.activateWindow()
         super().closeEvent(event)
-
-
-class SaveWindow(Window):
+        
+class Dialog(QDialog):
     """
-    The window displayed to save the data.
+    This "window" is a QDialog. It gains full focus and 
+    blocks the main window until it is closed.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(title="Save Dialog", *args, **kwargs)
+    def __init__(self, parent, title="Window", *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        # this makes the main application unresponsive while using this window
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.setWindowTitle(f"Spectran: {title}")
+        self.setWindowIcon(QIcon(str(spectran_path / "data/osci_128.ico")))
+        self.setMinimumSize(300, 200)
+
+    def closeEvent(self, event):
+        """
+        Override the close event to set focus back to the parent window.
+        """
+        if self.parent():
+            self.parent().setFocus()
+            self.parent().activateWindow()
+        super().closeEvent(event)
+
+
+class SaveWindow(Dialog):
+    """
+    The Dialog that is displayed to save the data.
+    """
+
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, title="Saving Options", *args, **kwargs)
+        
         # Save Options
         self.options_box = QGroupBox("Options", self)
         options_layout = QGridLayout()
@@ -89,7 +117,6 @@ class SaveWindow(Window):
         self.save_time_line.setToolTip("Save array of time points to the file.")
         options_layout.addWidget(self.save_time_line, row, 1)
         
-        
         # save psds
         row += 1
         save_psd_label = QLabel("Save PSDS", self)
@@ -99,9 +126,16 @@ class SaveWindow(Window):
         options_layout.addWidget(self.save_psd, row, 1)
 
         # Save Button
-        self.saveButton = QPushButton("Save", self)
-        self.saveButton.clicked.connect(self.save)
-        self.layout.addWidget(self.saveButton)
+        self.save_button = QPushButton("Save", self)
+        self.save_button.clicked.connect(self.save)
+        self.layout.addWidget(self.save_button)
+        
+        # add status bar
+        self.status_bar = QStatusBar()
+        self.status_bar.setSizeGripEnabled(False)
+        self.status_bar.showMessage("Ready to save data")
+        
+        self.layout.addWidget(self.status_bar)
         
     def save_mode_changed(self, text, *args):
         
@@ -112,14 +146,22 @@ class SaveWindow(Window):
         self.save_psd.setChecked(False)
 
     def save(self):
+        """Save the data to a file.
+        """
+        self.save_button.setEnabled(False)
+        self.status_bar.showMessage("Saving data...")
         mode = self.mode_dd.currentData()
         save_psds = self.save_psd.isChecked()
         save_time_line = self.save_time_line.isChecked()
-        path = self.parent.data_handler.save_file(mode=mode,
+        path = self.parent().data_handler.save_file(mode=mode,
                                                   save_psds=save_psds,
                                                   save_time_line=save_time_line)
+        self.save_button.setEnabled(True) 
         if path:
+            self.status_bar.showMessage(f"Data saved to {path}")
             self.close()
+        else:
+            self.status_bar.showMessage("Saving canceled")
         return
 
 
