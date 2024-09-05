@@ -24,6 +24,7 @@ from .measurement import Worker, run_measurement
 class MainUI(QWidget):
 
     driver_instance: DAQ = None
+    stop_plotting = False
 
     def __init__(self, main_window, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -220,7 +221,9 @@ class MainUI(QWidget):
 
         self.plot_layout = QGridLayout()
         plot_gbox.setLayout(self.plot_layout)
-
+        # shrink column 1:
+        self.plot_layout.setColumnStretch(0, 1)
+        self.plot_layout.setColumnStretch(2, 2)
         # Sample Rate
         row = 0
         self.plot_layout.addWidget(QLabel("Plot Signal: "), row, 0)
@@ -240,12 +243,18 @@ class MainUI(QWidget):
         self.plot_spectrum_cb.setChecked(True)
         self.plot_spectrum_cb.setToolTip("Plot spectrum diagram only if this is enabled. Disable for faster measurements.")
         self.plot_layout.addWidget(self.plot_spectrum_cb, row, 1)
-        self.plot_spectrum_button = QPushButton("Plot Spectrum")
-        self.plot_spectrum_button.clicked.connect(self.plot_spectrum)
+        self.plot_spectrum_button = QPushButton("Calculate PSD && plot")
+        self.plot_spectrum_button.clicked.connect(self.calculate_psd_and_plot)
         self.plot_layout.addWidget(self.plot_spectrum_button, row, 2)
-
-        self.plot_layout = QGridLayout()
-        plot_gbox.setLayout(self.plot_layout)
+        
+    def calculate_psd_and_plot(self):
+        self.main_window.statusBar().showMessage("Calculating PSD")
+        plot_worker = Worker(self.main_window.data_handler.calculate_data, None, ignore_check=True)
+        plot_worker.signals.finished.connect(
+            lambda: self.main_window.plots.update_plots(index=None, force_draw=True))
+        plot_worker.signals.error.connect(self.main_window.raise_error)
+        self.main_window.threadpool.start(plot_worker)
+        self.main_window.statusBar().showMessage("Ready for measurement")
         
     def plot_signal(self):
         if self.main_window.data_handler.voltage_data is None:
@@ -255,16 +264,6 @@ class MainUI(QWidget):
         t = self.main_window.data_handler.time_seq
         v = self.main_window.data_handler.voltage_data[-1]
         self.main_window.plots.update_signal_plot(t, v, force_draw=True)
-    
-    def plot_spectrum(self):
-        if (self.main_window.data_handler.psd is None 
-            or self.main_window.data_handler.frequencies is None):
-            self.main_window.raise_error("No data to plot")
-            return
-
-        f = self.main_window.data_handler.frequencies[1:]
-        p = self.main_window.data_handler.psd[1:]
-        self.main_window.plots.update_spectrum_plot(f, p, force_draw=True)
         
     def set_config(self, config: dict):
         """Set the configuration dictionary to the UI
@@ -415,7 +414,7 @@ class MainUI(QWidget):
             log.debug("Wanted to plot data at index {}, but measurement was stopped".format(index))
             return
         
-        plot_worker = Worker(self.main_window.data_handler.calculate_data, index)
+        plot_worker = Worker(self.main_window.data_handler.calculate_data, index, ignore_check=False)
         plot_worker.signals.finished.connect(
             lambda: self.main_window.plots.update_plots(index=index))
         plot_worker.signals.error.connect(self.main_window.raise_error)

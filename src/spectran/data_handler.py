@@ -60,7 +60,7 @@ class DataHandler():
             self.psd = np.mean(self.psds, axis=0)
             index = self.psds.shape[0]-1
             
-            log.debug("All PSDs calculated")
+            log.debug("All PSDs calculated ({}/{} at the end)".format(len(undone_idxs), n))
             
         else:
             # calculate the psd for current index
@@ -89,7 +89,7 @@ class DataHandler():
         self.psd = np.zeros((int(duration * sample_rate)//2+1))
         self.done_indices = set()
         
-    def calculate_data(self, index:int, progress_callback):
+    def calculate_data(self, index:int, ignore_check:bool = True, progress_callback=None):
         """Calculates the PSD of the data and stores it in the 
         psd attribute only if the plotting of psd is enabled.
 
@@ -97,9 +97,15 @@ class DataHandler():
             data (np.ndarray): one dimensional array of data 
                 if data is None, only the psd is calculated
             index (int): average index of data
+            ignore_check (bool): if True, the psd is calculated regardless of the plotting setting
             progress_callback (Signal): _description_
         """
-        if self.main_window.main_ui.plot_spectrum_cb.isChecked():
+        # if there is no data, we dont calculate the psd
+        if self.voltage_data is None:
+            raise ValueError("No data to calculate")
+        
+        if (ignore_check 
+            or self.main_window.main_ui.plot_spectrum_cb.isChecked()):
             self.calculate_psd(index)
 
     def save_file(self, file_path:str|Path=None, 
