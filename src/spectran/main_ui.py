@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
 )
 
 from PySide6.QtGui import QRegularExpressionValidator
-import numpy as np
 
 from . import log, ureg
 from .windows import PropertiesWindow

@@ -3,7 +3,6 @@ But also the Worker class to run the measurement in a separate thread."""
 
 from . import log, ureg
 from .daq import DAQ
-import numpy as np
 from PySide6.QtCore import Signal, Slot, QObject
 from datetime import datetime
 

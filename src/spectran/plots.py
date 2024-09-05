@@ -1,6 +1,5 @@
 import pyqtgraph as pg
-import numpy as np
-from . import log, ureg
+from . import log
 
 
 class Plots(pg.GraphicsLayoutWidget):
