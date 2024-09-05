@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QHBoxLayout,
     QComboBox,
+    QCheckBox,
     QTabWidget,
     QStyleFactory,
     QHeaderView,
@@ -22,6 +23,7 @@ from . import __version__ as spectran_version
 from . import spectran_path
 from .settings import Settings, DEFAULT_SETTINGS
 from . import log
+from .data_handler import SAVING_MODES
 
 class Window(QWidget):
     """
@@ -63,17 +65,59 @@ class SaveWindow(Window):
 
         # Save Options
         self.options_box = QGroupBox("Options", self)
-        self.options_layout = QVBoxLayout()
-        self.options_box.setLayout(self.options_layout)
+        options_layout = QGridLayout()
+        self.options_box.setLayout(options_layout)
         self.layout.addWidget(self.options_box)
+        
+        # saving mode
+        row = 0
+        mode_label = QLabel("Saving Mode", self)
+        options_layout.addWidget(mode_label, row, 0)
+        self.mode_dd = QComboBox(self)
+        for m in SAVING_MODES:
+            self.mode_dd.addItem(m.name, m)
+        self.mode_dd.setCurrentText(SAVING_MODES.HDF5.name)
+        self.mode_dd.currentTextChanged.connect(self.save_mode_changed)
+        options_layout.addWidget(self.mode_dd, row, 1)
+                
+        # Save Time Line
+        row += 1
+        save_time_line_label = QLabel("Save Time Line", self)
+        options_layout.addWidget(save_time_line_label, row, 0)
+        self.save_time_line = QCheckBox(self)
+        self.save_time_line.setChecked(False)
+        self.save_time_line.setToolTip("Save array of time points to the file.")
+        options_layout.addWidget(self.save_time_line, row, 1)
+        
+        
+        # save psds
+        row += 1
+        save_psd_label = QLabel("Save PSDS", self)
+        options_layout.addWidget(save_psd_label, row, 0)
+        self.save_psd = QCheckBox(self)
+        self.save_psd.setChecked(False)
+        options_layout.addWidget(self.save_psd, row, 1)
 
         # Save Button
         self.saveButton = QPushButton("Save", self)
         self.saveButton.clicked.connect(self.save)
         self.layout.addWidget(self.saveButton)
+        
+    def save_mode_changed(self, text, *args):
+        
+        show = text == SAVING_MODES.HDF5.name
+        self.save_time_line.setEnabled(show)
+        self.save_time_line.setChecked(False)
+        self.save_psd.setEnabled(show)
+        self.save_psd.setChecked(False)
 
     def save(self):
-        path = self.parent.data_handler.save_file()
+        mode = self.mode_dd.currentData()
+        save_psds = self.save_psd.isChecked()
+        save_time_line = self.save_time_line.isChecked()
+        path = self.parent.data_handler.save_file(mode=mode,
+                                                  save_psds=save_psds,
+                                                  save_time_line=save_time_line)
         if path:
             self.close()
         return

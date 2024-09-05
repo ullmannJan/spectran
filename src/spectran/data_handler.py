@@ -1,9 +1,12 @@
 """This class should contain all data related functionality."""
 from . import log, ureg
-from scipy.signal import welch, periodogram
+from scipy.signal import periodogram
 import numpy as np 
 from PySide6.QtWidgets import QFileDialog
+import h5py
 from pathlib import Path
+from enum import Enum
+SAVING_MODES = Enum("SavingModes", "PLAIN_TEXT NP_BINARY NP_COMPRESSED HDF5")
 
 class DataHandler():
 
@@ -99,11 +102,17 @@ class DataHandler():
         if self.main_window.main_ui.plot_spectrum_cb.isChecked():
             self.calculate_psd(index)
 
-    def save_file(self, file_path:str|Path=None):
+    def save_file(self, file_path:str|Path=None, 
+                  mode:SAVING_MODES=SAVING_MODES.PLAIN_TEXT,
+                  save_psds:bool=False,
+                  save_time_line:bool=False):
         """Saves the data to a file. If no file_path is given, a file dialog is opened.
 
         Args:
             file_path (str|Path, optional): where to save file. Defaults to None.
+            mode: SAVING_MODES: how to save the file. Defaults to SAVING_MODES.PLAIN_TEXT.
+            save_psd (bool, optional): save the psd data. Defaults to False. Not Implemented.
+            save_time_line (bool, optional): save the time line. Defaults to False. Not Implemented.
         """
         if not self.main_window.measurement_stopped:
             self.main_window.raise_error("Measurement is still running. Stop it first.")            
@@ -113,8 +122,17 @@ class DataHandler():
             self.main_window.raise_error("No data to save")
             return
         
+                
         if file_path is None:
-            file_path = self.save_file_dialog()
+            file_name = "output.txt"
+            match mode:
+                case SAVING_MODES.NP_BINARY:
+                    file_name = "output.npy"
+                case SAVING_MODES.NP_COMPRESSED:
+                    file_name = "output.npz"
+                case SAVING_MODES.HDF5:
+                    file_name = "output.h5"
+            file_path = self.save_file_dialog(file_name)
         if file_path is None:
             return
         
@@ -130,16 +148,50 @@ class DataHandler():
             + f"Unit of Data: {self._config['unit']}\n"
             )
 
-        np.savetxt(self.file_path, self.voltage_data.T, 
-                   delimiter="\t",
-                   header=header_text)
+        match mode:
+            case SAVING_MODES.PLAIN_TEXT:
+                np.savetxt(self.file_path, 
+                           self.voltage_data.T, 
+                           delimiter="\t",
+                           header=header_text)
+                
+            case SAVING_MODES.NP_BINARY:
+                np.save(self.file_path, 
+                        self.voltage_data)
+                meta_file = str(self.file_path) + ".metadata"
+                with open(meta_file, "w") as f:
+                    f.write(header_text)
+                    
+            case SAVING_MODES.NP_COMPRESSED:
+                np.savez_compressed(self.file_path, 
+                                    voltage_data=self.voltage_data)
+                meta_file = str(self.file_path) + ".metadata"
+                with open(meta_file, "w") as f:
+                    f.write(header_text)
+                    
+            case SAVING_MODES.HDF5:
+                with h5py.File(self.file_path, "w") as f:
+                    if save_time_line:
+                        f.create_dataset("time_seq", 
+                                         data=self.time_seq)
+                    f.create_dataset("voltage_data", 
+                                     data=self.voltage_data)
+                    if save_psds:
+                        f.create_dataset("frequencies",
+                                         data=self.frequencies)
+                        f.create_dataset("psds", 
+                                         data=self.psds)
+                    # Add header information as attributes
+                    for key, value in self._config.items():
+                        f.attrs[key] = str(value)
+                    
         
         # self.main_window.statusBar().showMessage(f"Data saved to {self.file_path}")
         log.info("Data saved to {}".format(self.file_path))
         return self.file_path
     
     def save_file_dialog(
-        self, file_name="output.txt", extensions="Data-File (*.dat *.txt);;All Files (*)"
+        self, file_name="output.txt", extensions="Data-File (*.txt *.dat *.npy *.npz *.h5);;All Files (*)"
     ):
         filename, _ = QFileDialog.getSaveFileName(
             self.main_window.main_ui, "Save", file_name, extensions

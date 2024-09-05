@@ -19,6 +19,7 @@ dependencies = [
     'nidaqmx',
     'fastapi',
     'uvicorn',
+    'h5py',
     'importlib-metadata; python_version<"3.11"',
 ]
 
