@@ -36,7 +36,8 @@ class FastAPIServer(QThread):
             return {"message": "pong"}
         
         @app.get("/favicon.ico")
-        def favicon():
+        @app.get("/osci_128.ico")
+        def return_image():
             return FileResponse(spectran_path / "data/osci_128.ico")
 
         @app.get("/", response_class=HTMLResponse)
