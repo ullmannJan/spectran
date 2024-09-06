@@ -1,11 +1,12 @@
 from PySide6.QtCore import QThread
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.responses import FileResponse, HTMLResponse
 import uvicorn
 import requests
 from time import sleep
 from pathlib import Path
-from . import log, ureg
+from . import log, ureg, spectran_path
 
 DEFAULT_API_KEY = "12345678910111213"
 
@@ -33,6 +34,14 @@ class FastAPIServer(QThread):
         @app.get("/ping")
         def ping():
             return {"message": "pong"}
+        
+        @app.get("/favicon.ico")
+        def favicon():
+            return FileResponse(spectran_path / "data/osci_128.ico")
+
+        @app.get("/", response_class=HTMLResponse)
+        def homepage():
+            return FileResponse(spectran_path / "data/api.html")
 
         @app.get("/alive")
         def alive():
