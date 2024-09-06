@@ -213,6 +213,15 @@ class MainUI(QWidget):
         self.status_layout = QGridLayout()
         status_gbox.setLayout(self.status_layout)
         
+    def enable_plotting(self, signal:bool, spectrum:bool):
+        """Enable or disable plotting of signal and spectrum
+
+        Args:
+            enable (bool): True to enable plotting, False to disable
+        """
+        self.plot_signal_cb.setChecked(signal)
+        self.plot_spectrum_cb.setChecked(spectrum)
+        
     def add_plot_box(self):
 
         # Channel Settings

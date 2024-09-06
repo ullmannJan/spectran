@@ -10,7 +10,7 @@ if __name__ == "__main__":
     # connect to the API Server
     # the api_key has to be specified 
     # if it is not the DEFAULT_API_KEY
-    api = API_Connection(api_key="3824392043")
+    api = API_Connection()
     
     # create a configuration dictionary
     CONFIG = {
@@ -21,8 +21,13 @@ if __name__ == "__main__":
         "signal_range_min": -3 * ureg.volt, 
         "signal_range_max":  3 * ureg.volt,
         "unit": "Volt",
-        "plot_signal": False,
     }
+    
+    # enable plotting / this can also be done by setting the 
+    # config keys "plot_signal" = True/False
+    # and "plot_spectrum" = True/False
+    api.enable_plotting(signal_enabled=False, 
+                        spectrum_enabled=True)
     
     # connect to a device, it is the same as selecting 
     # the device in the GUI and clicking connect
@@ -39,6 +44,6 @@ if __name__ == "__main__":
         # this waits for the measurement to finish
         api.wait_for_measurement()
         # save the measured data to a file
-        api.save_file(f"data_{i}.txt")
+        # api.save_file(f"data_{i}.txt")
     
     
