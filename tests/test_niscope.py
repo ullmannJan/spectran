@@ -28,7 +28,7 @@ def test_connection():
 
     data_holder = np.empty((1, duration*sample_rate))
 
-    driver.get_sequence(data_holder,
+    driver.get_sequence(data_holder[0],
                         0,
                         config,
                         )

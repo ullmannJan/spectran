@@ -1,2 +1,2 @@
 def test_connection():
-    return
+    assert True
