@@ -29,6 +29,10 @@ class FastAPIServer(QThread):
                     status_code=status.HTTP_401_UNAUTHORIZED, 
                     detail="Could not validate credentials"
                 )
+                
+        @app.get("/ping")
+        def ping():
+            return {"message": "pong"}
 
         @app.get("/alive")
         def alive():
