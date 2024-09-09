@@ -71,8 +71,12 @@ api.save_file(f"data.txt")
 
 ## Development
 
-Spectran is written to provide extensive possibilities for extension. Just extend the `spectran.daq.DAQ` class for a new driver and implement all necessary functions.
-
 Install module into environment 
 
     pip install -e .[dev]
+
+### Extensibility
+
+Spectran is written to provide extensive possibilities for extension. Just extend the `spectran.daq.DAQ` class for a new driver and implement all necessary functions.
+
+Then add this class to list of drivers in `spectran.daq.__init__`
