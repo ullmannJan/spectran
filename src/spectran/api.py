@@ -37,7 +37,7 @@ class FastAPIServer(QThread):
         
         @app.get("/favicon.ico")
         @app.get("/osci_128.ico")
-        def return_image():
+        def return_logo():
             return FileResponse(spectran_path / "data/osci_128.ico")
 
         @app.get("/", response_class=HTMLResponse)
