@@ -10,13 +10,13 @@ if __name__ == "__main__":
     # connect to the API Server
     # the api_key has to be specified 
     # if it is not the DEFAULT_API_KEY
-    api = API_Connection()
+    api = API_Connection(host="134.2.50.242")
     
     # create a configuration dictionary
     CONFIG = {
         "input_channel": "ai0",
-        "sample_rate": 50_000 * ureg.Hz,
-        "duration": 0.05 * ureg.second,
+        "sample_rate": 50_000_000 * ureg.Hz,
+        "duration": 1 * ureg.second,
         "averages": 4,
         "signal_range_min": -3 * ureg.volt, 
         "signal_range_max":  3 * ureg.volt,
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # config keys "plot_signal" = True/False
     # and "plot_spectrum" = True/False
     api.enable_plotting(signal_enabled=False, 
-                        spectrum_enabled=True)
+                        spectrum_enabled=False)
     
     # connect to a device, it is the same as selecting 
     # the device in the GUI and clicking connect
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     api.set_config(CONFIG)    
     
     # make 7 measurements
-    for i in range(1, 8):
+    for i in range(1, 4):
         # each with a different sample rate
         api.set_config(dict(sample_rate=500_000*i * ureg.Hz))
         # start the measurement
@@ -44,6 +44,8 @@ if __name__ == "__main__":
         # this waits for the measurement to finish
         api.wait_for_measurement()
         # save the measured data to a file
-        # api.save_file(f"data_{i}.txt")
+        print(f"Saving data_{i}.txt")
+        api.save_file(f"data_{i}.txt")
+        print(f"Saved data_{i}.txt")
     
     

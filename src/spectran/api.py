@@ -79,8 +79,10 @@ class FastAPIServer(QThread):
         
         @app.post("/save_file", dependencies=[Depends(api_key_auth)])
         def save_file(json:dict):
-            self.main_window.data_handler.save_file(json["file_path"]) 
-            return {"message": f"File saved to {json['file_path']}"}
+            file_path = Path(json["file_path"])
+            # kwargs = json.get("kwargs", {})
+            self.main_window.data_handler.save_file(file_path) 
+            return {"message": f"File saved to {file_path}"}
           
         @app.post("/running", dependencies=[Depends(api_key_auth)])
         def running():
@@ -190,7 +192,6 @@ class API_Connection():
         Args:
             file_path (str): Filename where to save the data.
         """
-        file_path = Path(file_path).resolve()
         r = requests.post(f"{self.url}/save_file", 
                                  headers=self.headers,
                                  json={"file_path": str(file_path)})
