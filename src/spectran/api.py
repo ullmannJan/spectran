@@ -79,7 +79,7 @@ class FastAPIServer(QThread):
         
         @app.post("/save_file", dependencies=[Depends(api_key_auth)])
         def save_file(json:dict):
-            file_path = Path(json["file_path"])
+            file_path = Path(json["file_path"]).resolve()
             # kwargs = json.get("kwargs", {})
             self.main_window.data_handler.save_file(file_path) 
             return {"message": f"File saved to {file_path}"}
