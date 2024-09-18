@@ -7,6 +7,7 @@ import requests
 from time import sleep
 from pathlib import Path
 from . import log, ureg, spectran_path
+from .data_handler import SAVING_MODES
 
 DEFAULT_API_KEY = "12345678910111213"
 
@@ -80,8 +81,11 @@ class FastAPIServer(QThread):
         @app.post("/save_file", dependencies=[Depends(api_key_auth)])
         def save_file(json:dict):
             file_path = Path(json["file_path"]).resolve()
-            # kwargs = json.get("kwargs", {})
-            self.main_window.data_handler.save_file(file_path) 
+            kwargs = json.get("kwargs", {})
+            if kwargs:
+                kwargs["mode"] = SAVING_MODES(kwargs.get("mode", SAVING_MODES.HDF5.value))
+            print(kwargs)
+            self.main_window.data_handler.save_file(file_path, **kwargs)
             return {"message": f"File saved to {file_path}"}
           
         @app.post("/running", dependencies=[Depends(api_key_auth)])
@@ -186,15 +190,16 @@ class API_Connection():
         message = self.response_handler(r)
         log.info("Configured Measurements with {}".format(message))
         
-    def save_file(self, file_path:str, **save_kwargs):
+    def save_file(self, file_path:str, **kwargs):
         """Save data to a file with the given filename.
 
         Args:
             file_path (str): Filename where to save the data.
         """
+        kwargs["mode"] = kwargs.get("mode", SAVING_MODES.HDF5).value
         r = requests.post(f"{self.url}/save_file", 
                                  headers=self.headers,
-                                 json={"file_path": str(file_path)})
+                                 json={"file_path": str(file_path)}.update(kwargs))
         message = self.response_handler(r)
         log.info("Saved file to {} with {}".format(file_path, message))
         
