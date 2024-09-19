@@ -260,7 +260,8 @@ class MainUI(QWidget):
         self.main_window.statusBar().showMessage("Calculating PSD")
         plot_worker = Worker(self.main_window.data_handler.calculate_data, None, ignore_check=True)
         plot_worker.signals.finished.connect(
-            lambda: self.main_window.plots.update_plots(index=None, force_draw=True))
+            lambda: self.main_window.plots.update_plots(index=None, force_draw=False, 
+                                                        plot_signal=False))
         plot_worker.signals.error.connect(self.main_window.raise_error)
         self.main_window.threadpool.start(plot_worker)
         self.main_window.statusBar().showMessage("Ready for measurement")

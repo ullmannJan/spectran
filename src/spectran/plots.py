@@ -50,7 +50,7 @@ class Plots(pg.GraphicsLayoutWidget):
             y = 10 ** mousePoint.y() if self.plot2.ctrl.logYCheck.isChecked() else mousePoint.y()
             self.coords_plot2.setText(f"x = {x:.3e}, y = {y:.3e}")
 
-    def update_plots(self, index=None, force_draw=False):
+    def update_plots(self, index=None, force_draw=False, plot_signal=True, plot_spectrum=True):
         
         log.debug("Updating plots to index {}".format(index))
         
@@ -65,20 +65,21 @@ class Plots(pg.GraphicsLayoutWidget):
         if index is None:
             index = -1
         
-        self.update_signal_plot(
-            self.main_window.data_handler.time_seq, 
-            self.main_window.data_handler.voltage_data[index,:],
-            force_draw=force_draw
-        )
-        
-        if (self.main_window.data_handler.psd is not None
-            and self.main_window.data_handler.frequencies is not None):
-            self.update_spectrum_plot(
-                # we don't plot the first frequency (0 Hz)
-                self.main_window.data_handler.frequencies[1:],
-                self.main_window.data_handler.psd[1:],
+        if plot_signal:
+            self.update_signal_plot(
+                self.main_window.data_handler.time_seq, 
+                self.main_window.data_handler.voltage_data[index,:],
                 force_draw=force_draw
             )
+        if plot_spectrum:
+            if (self.main_window.data_handler.psd is not None
+                and self.main_window.data_handler.frequencies is not None):
+                self.update_spectrum_plot(
+                    # we don't plot the first frequency (0 Hz)
+                    self.main_window.data_handler.frequencies[1:],
+                    self.main_window.data_handler.psd[1:],
+                    force_draw=force_draw
+                )
 
     def update_signal_plot(self, x, y, force_draw=False):
         # clear the plot

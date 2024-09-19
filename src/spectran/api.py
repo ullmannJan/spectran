@@ -126,6 +126,16 @@ class FastAPIServer(QThread):
             self.main_window.main_ui.enable_plotting(signal_enable, spectrum_enable)
             return {"message": f"Plotting set to signal:{signal_enable} and spectrum:{spectrum_enable}"}
         
+        @app.post("/calculate_psd", dependencies=[Depends(api_key_auth)])
+        def calculate_psd():
+            log.debug("Calculating PSD")
+            try:
+                self.main_window.data_handler.calculate_data(None, ignore_check=True)
+                return {"message": "PSD calculated"}
+            except Exception as e:
+                log.error(f"Error calculating PSD: {e}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                                    detail="Could not calculate PSD: "+str(e))
         uvicorn.run(app, host=self.host, port=self.port)
         
 
@@ -265,4 +275,10 @@ class API_Connection():
                                  headers=self.headers,
                                  json={"driver": driver,
                                        "device": device})
+        log.info(self.response_handler(r))
+        
+    def calculate_psd(self):
+        """Calculate the PSD of the data."""
+        r = requests.post(f"{self.url}/calculate_psd", 
+                            headers=self.headers)
         log.info(self.response_handler(r))

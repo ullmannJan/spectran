@@ -179,6 +179,9 @@ class DataHandler():
                     
             case SAVING_MODES.HDF5:
                 self.file_path = self.file_path.with_suffix(".h5")
+                log.debug("Saving to {}, save_time_line={}, save_psds={}".format(self.file_path,
+                                                            save_time_line, 
+                                                            save_psds))
                 with h5py.File(self.file_path, "w") as f:
                     if save_time_line:
                         f.create_dataset("time_seq", 
@@ -186,6 +189,8 @@ class DataHandler():
                     f.create_dataset("voltage_data", 
                                      data=self.voltage_data)
                     if save_psds:
+                        if np.all(self.psd == 0):
+                            raise ValueError("No PSDs calculated, probably because you choose not to plot them")
                         f.create_dataset("frequencies",
                                          data=self.frequencies)
                         f.create_dataset("psds", 
