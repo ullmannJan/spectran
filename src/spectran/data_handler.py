@@ -83,6 +83,7 @@ class DataHandler():
         self.voltage_data = None
         self.psds = None
         self.psd = None
+        self.frequencies = None
         
         self.voltage_data = np.empty((averages, int(duration * sample_rate)))
         self.psds = np.empty(((averages, int(duration * sample_rate)//2+1)))
@@ -189,7 +190,7 @@ class DataHandler():
                     f.create_dataset("voltage_data", 
                                      data=self.voltage_data)
                     if save_psds:
-                        if np.all(self.psd == 0):
+                        if self.frequencies is None:
                             raise ValueError("No PSDs calculated, probably because you choose not to plot them")
                         f.create_dataset("frequencies",
                                          data=self.frequencies)
