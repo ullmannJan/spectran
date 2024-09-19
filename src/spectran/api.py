@@ -82,6 +82,7 @@ class FastAPIServer(QThread):
         def save_file(json:dict):
             file_path = Path(json["file_path"]).resolve()
             kwargs = json.get("kwargs", {})
+            log.debug(kwargs)
             if kwargs:
                 kwargs["mode"] = SAVING_MODES(kwargs.get("mode", SAVING_MODES.HDF5.value))
             print(kwargs)
