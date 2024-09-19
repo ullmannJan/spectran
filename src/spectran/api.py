@@ -51,12 +51,17 @@ class FastAPIServer(QThread):
 
         @app.post("/start_measurement", dependencies=[Depends(api_key_auth)])
         def start_measurement():
-            status = self.main_window.main_ui.start_measurement()
-            if status is None:
-                return {"message": "Measurement started"}
-            else:
-                return {"message": f"Measurement failed: {status}"}
-            
+            try:
+                error = self.main_window.main_ui.start_measurement()
+                if error is None:
+                    return {"message": "Measurement started"}
+                else:
+                    return {"message": f"Measurement failed: {error}"}
+            except Exception as e:  
+                log.error(f"Error starting measurement: {e}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                                    detail="Failed to start measurement: "+str(e))            
+        
         @app.post("/stop_measurement", dependencies=[Depends(api_key_auth)])
         def stop_measurement():
             self.main_window.main_ui.stop_measurement()
@@ -74,21 +79,30 @@ class FastAPIServer(QThread):
                 
                 return {k: convert_value(v) for k, v in d.items()}
             
-            config = serial_dict_to_config(config)
-            self.main_window.main_ui.set_config(config)
-            return {"message": f"Configuration {config}"}
-        
+            try:
+                config = serial_dict_to_config(config)
+                self.main_window.main_ui.set_config(config)
+                return {"message": f"Configuration {config}"}
+            except Exception as e:
+                log.error(f"Error setting config: {e}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                                    detail="Failed to set config: "+str(e))
+            
+            
         @app.post("/save_file", dependencies=[Depends(api_key_auth)])
         def save_file(json:dict):
             file_path = Path(json["file_path"]).resolve()
             kwargs = json.get("kwargs", {})
-            log.debug(kwargs)
             if kwargs:
                 kwargs["mode"] = SAVING_MODES(kwargs.get("mode", SAVING_MODES.HDF5.value))
-            print(kwargs)
-            self.main_window.data_handler.save_file(file_path, **kwargs)
-            return {"message": f"File saved to {file_path}"}
-          
+            log.debug(kwargs)
+            try:
+                self.main_window.data_handler.save_file(file_path, **kwargs)
+                return {"message": f"File saved to {file_path}"}
+            except Exception as e:
+                log.error(f"Error saving file: {e}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to save file: "+str(e))
+            
         @app.post("/running", dependencies=[Depends(api_key_auth)])
         def running():
             return {"message": not self.main_window.measurement_stopped}
@@ -97,9 +111,14 @@ class FastAPIServer(QThread):
         def connect_device(json:dict):
             driver = json["driver"]
             device = json["device"]
-            self.main_window.main_ui.connect_device_manual(driver, device)
-            return {"message": f"Connected to {driver} on {device}"}
-         
+            try:
+                self.main_window.main_ui.connect_device_manual(driver, device)
+                return {"message": f"Connected to {driver} on {device}"}
+            except Exception as e:
+                log.error(f"Error connecting device: {e}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                                    detail="Could not connect to device: "+str(e))
+             
         @app.post("/enable_plotting", dependencies=[Depends(api_key_auth)])
         def enable_plotting(json:dict):
             signal_enable = json["signal"]
@@ -197,10 +216,13 @@ class API_Connection():
         Args:
             file_path (str): Filename where to save the data.
         """
+        
         kwargs["mode"] = kwargs.get("mode", SAVING_MODES.HDF5).value
+        json = {"file_path": str(file_path)}
+        json['kwargs'] = kwargs
         r = requests.post(f"{self.url}/save_file", 
                                  headers=self.headers,
-                                 json={"file_path": str(file_path)}.update(kwargs))
+                                 json=json)
         message = self.response_handler(r)
         log.info("Saved file to {} with {}".format(file_path, message))
         
