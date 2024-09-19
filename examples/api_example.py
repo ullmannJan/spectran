@@ -12,7 +12,7 @@ if __name__ == "__main__":
     # connect to the API Server
     # the api_key has to be specified 
     # if it is not the DEFAULT_API_KEY
-    api = API_Connection(host="134.2.50.242")
+    api = API_Connection(host="127.0.0.1")
     
     # create a configuration dictionary
     CONFIG = {
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         # save the measured data to a file
         print(f"Saving data_{i}.txt")
         start = time.time()
-        api.save_file(f"D:\JanUllmann[Jan]\data_{i}.txt", mode=SAVING_MODES.HDF5, save_psds=True)
+        api.save_file(f"data_{i}.txt", mode=SAVING_MODES.HDF5, save_psds=True)
         end = time.time()
         print(f"Saved data_{i}.txt in {end-start} seconds")
     
