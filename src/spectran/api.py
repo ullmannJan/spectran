@@ -97,7 +97,7 @@ class FastAPIServer(QThread):
                 kwargs["mode"] = SAVING_MODES(kwargs.get("mode", SAVING_MODES.HDF5.value))
             log.debug(kwargs)
             try:
-                self.main_window.data_handler.save_file(file_path, **kwargs)
+                file_path = self.main_window.data_handler.save_file(file_path, **kwargs)
                 return {"message": f"File saved to {file_path}"}
             except Exception as e:
                 log.error(f"Error saving file: {e}")
@@ -234,7 +234,7 @@ class API_Connection():
                                  headers=self.headers,
                                  json=json)
         message = self.response_handler(r)
-        log.info("Saved file to {} with {}".format(file_path, message))
+        log.info(message)
         
     def enable_plotting(self, signal_enabled:bool, spectrum_enabled:bool):
         """Enable or disable plotting of the data.
