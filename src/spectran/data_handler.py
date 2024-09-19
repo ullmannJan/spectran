@@ -162,6 +162,7 @@ class DataHandler():
                            header=header_text)
                 
             case SAVING_MODES.NP_BINARY:
+                self.file_path = self.file_path.with_suffix(".npy")
                 np.save(self.file_path, 
                         self.voltage_data)
                 meta_file = str(self.file_path) + ".metadata"
@@ -169,6 +170,7 @@ class DataHandler():
                     f.write(header_text)
                     
             case SAVING_MODES.NP_COMPRESSED:
+                self.file_path = self.file_path.with_suffix(".npz")
                 np.savez_compressed(self.file_path, 
                                     voltage_data=self.voltage_data)
                 meta_file = str(self.file_path) + ".metadata"
@@ -176,6 +178,7 @@ class DataHandler():
                     f.write(header_text)
                     
             case SAVING_MODES.HDF5:
+                self.file_path = self.file_path.with_suffix(".h5")
                 with h5py.File(self.file_path, "w") as f:
                     if save_time_line:
                         f.create_dataset("time_seq", 
@@ -193,7 +196,7 @@ class DataHandler():
                     
         
         # self.main_window.statusBar().showMessage(f"Data saved to {self.file_path}")
-        log.info("Data saved to {}".format(self.file_path))
+        log.info("Data saved to {} with {}".format(self.file_path, mode))
         return self.file_path
     
     def save_file_dialog(

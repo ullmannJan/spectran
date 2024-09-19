@@ -49,7 +49,7 @@ if __name__ == "__main__":
         # save the measured data to a file
         print(f"Saving data_{i}.txt")
         start = time.time()
-        api.save_file(f"D:\JanUllmann[Jan]\data_{i}.txt", mode=SAVING_MODES.HDF5, save_psds=True)
+        api.save_file(f"data_{i}.txt", mode=SAVING_MODES.HDF5, save_psds=True)
         end = time.time()
         print(f"Saved data_{i}.txt in {end-start} seconds")
     
