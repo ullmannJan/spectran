@@ -81,15 +81,38 @@ def calculate_psd(data):
     data["psds"] = psds
     return data
 
-def plot_psd(data):
+def plot(x, y, plot=None, **kwargs):
+    """Plots the data x and y.
+
+    Args:
+        x (array): x values to plot
+        y (array): y values to plot
+        plot (_type_, optional): plot instance. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+
+    if plot is None:
+        plot = pg.plot(**kwargs)
+    
+    plot.plot(x, y, **kwargs)    
+    
+    return plot
+
+def plot_psd(data, plot=None, title="PSD", **kwargs):
     """Plots the PSD of a data set.
 
     Args:
         data (dict): The data set to plot the PSD from.
     """
-    plot = pg.plot(data["frequencies"][1:], 
+    if plot is None:
+        plot = pg.plot()
+        
+    plot.plot(data["frequencies"][1:], 
                    get_psd(data)[1:], 
-                   title="PSD", 
+                   title=title, 
+                   **kwargs
                    )
     plot.setLogMode(x=True, y=True)
     plot.showGrid(x=True, y=True)
@@ -97,4 +120,7 @@ def plot_psd(data):
     plot.setLabel('left', 'Power Spectral Density [V/sqrt(Hz)]')
     plot.getAxis("left").enableAutoSIPrefix(enable=False)
     plot.getAxis("bottom").enableAutoSIPrefix(enable=False)
+    return plot
+    
+def show():
     pg.QtGui.QGuiApplication.instance().exec_()

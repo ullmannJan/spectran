@@ -153,9 +153,16 @@ class SaveWindow(Dialog):
         mode = self.mode_dd.currentData()
         save_psds = self.save_psd.isChecked()
         save_time_line = self.save_time_line.isChecked()
-        path = self.parent().data_handler.save_file(mode=mode,
+        try:
+            path = self.parent().data_handler.save_file(mode=mode,
                                                   save_psds=save_psds,
                                                   save_time_line=save_time_line)
+        except Exception as e:
+            log.error(f"Error saving data: {e}")
+            self.status_bar.showMessage("Error saving data")
+            self.save_button.setEnabled(True) 
+            return
+            
         self.save_button.setEnabled(True) 
         if path:
             self.status_bar.showMessage(f"Data saved to {path}")

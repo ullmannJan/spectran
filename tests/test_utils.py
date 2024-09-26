@@ -1,14 +1,15 @@
 from pathlib import Path
-from spectran.utils import load_file, plot_psd
-import matplotlib.pyplot as plt
+import spectran.utils as spu
+import pyqtgraph as pg
 
 def test_load_file():
     
     h5_file = Path(r"Q:\JanUllmann[JAN]\2024-09-26_Test\Voltage_amp_1e1.h5")
 
-    output = load_file(h5_file)
-    print(output)
+    output = spu.load_file(h5_file)
     
-if __name__ == "__main__":
-    data = load_file(r"Q:\JanUllmann[JAN]\2024-09-26_Test\Voltage_amp_1e1.h5")
-    plot_psd(data)
+def test_plotting():
+    data = spu.load_file(r"Q:\JanUllmann[JAN]\2024-09-26_Test\Voltage_amp_1e1.h5")
+    plot = spu.plot_psd(data)
+    spu.plot([1,2,3,4,5], [12,.343,34.,34,14], plot=plot, pen=pg.mkPen(width=.5, color="r"))
+    

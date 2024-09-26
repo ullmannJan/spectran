@@ -129,6 +129,10 @@ class DataHandler():
             self.main_window.raise_error("No data to save")
             return
         
+        if self.frequencies is None and save_psds:
+            self.main_window.raise_error("No PSDs calculated, probably because you choose not to plot them")
+            return
+        
                 
         if file_path is None:
             file_name = "output.txt"
@@ -190,8 +194,6 @@ class DataHandler():
                     f.create_dataset("voltage_data", 
                                      data=self.voltage_data)
                     if save_psds:
-                        if self.frequencies is None:
-                            raise ValueError("No PSDs calculated, probably because you choose not to plot them")
                         f.create_dataset("frequencies",
                                          data=self.frequencies)
                         f.create_dataset("psds", 
