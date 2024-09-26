@@ -77,7 +77,7 @@ class NIDAQMX(DAQ):
             # Log the actual settings
             config["sample_rate_real"] = read_task.timing.samp_clk_rate * ureg.Hz
             log.info("Sample Rate: {} Hz".format(read_task.timing.samp_clk_rate))
-            main_window.main_ui.sample_rate_status.setText(f"{config['sample_rate_real']:6g}")
+            main_window.main_ui.sample_rate_status.setText(f"{config['sample_rate_real'].to(ureg.hertz).magnitude:6g}")
 
             # set gui information
             config["signal_range_min_real"] = aichan.ai_min * ureg.volt
