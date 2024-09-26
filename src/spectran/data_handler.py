@@ -196,6 +196,8 @@ class DataHandler():
                                          data=self.frequencies)
                         f.create_dataset("psds", 
                                          data=self.psds)
+                        f.create_dataset("psd",
+                                         data=self.psd)
                     # Add header information as attributes
                     for key, value in self._config.items():
                         f.attrs[key] = str(value)
