@@ -2,7 +2,7 @@
 from pathlib import Path
 from . import ureg
 import h5py
-import pyqtgraph as pg 
+import numpy as np
 from scipy.signal import periodogram
 
 def load_file(file_path):
@@ -58,12 +58,12 @@ def get_psd(data):
     Returns:
         np.ndarray: the mean PSD
     """
-    if "psd" in data:
-        return data["psd"]
-    if "psds" not in data:
+    if "psd [V^2/Hz]" in data:
+        return data["psd [V^2/Hz]"]
+    if "psds [V^2/Hz]" not in data:
         data = calculate_psd(data)
-    data["psd"] = data["psds"].mean(axis=0)
-    return data["psd"]
+    data["psd [V^2/Hz]"] = data["psds [V^2/Hz]"].mean(axis=0)
+    return data["psd [V^2/Hz]"]
 
 def calculate_psd(data):
     """Calculates the PSD of a data set.
@@ -74,13 +74,19 @@ def calculate_psd(data):
     Returns:
         np.ndarray: the PSD
     """
-    frequencies, psds = periodogram(data['voltage_data'], 
-                                    fs=float(data["sample_rate"].split()[0]))
+    frequencies, psds = periodogram(data['voltage_data [V]'], 
+                                    fs=float(data["sample_rate_real"].split()[0]))
     
-    data["frequencies"] = frequencies
-    data["psds"] = psds
+    data["frequencies [Hz]"] = frequencies
+    data["psds [V^2/Hz]"] = psds
     return data
 
+def flux_noise(noise, transfer_func, sqrt=True):
+    
+    if sqrt:
+        return np.sqrt(noise) / transfer_func
+
+    return noise / transfer_func
 # def plot(x, y, plot=None, title=None, **kwargs):
 #     """Plots the data x and y.
 
@@ -117,7 +123,7 @@ def calculate_psd(data):
 #     # plot.setLogMode(x=True, y=True)
 #     plot.showGrid(x=True, y=True)
 #     plot.setLabel('bottom', 'Frequency', units='Hz')
-#     plot.setLabel('left', 'Power Spectral Density', units='V/sqrt(Hz)]')
+#     plot.setLabel('left', 'Power Spectral Density', units='V^2/Hz]')
 #     plot.getAxis("left").enableAutoSIPrefix(enable=False)
 #     plot.getAxis("bottom").enableAutoSIPrefix(enable=False)
 #     return plot
