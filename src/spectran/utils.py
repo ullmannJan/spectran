@@ -58,12 +58,12 @@ def get_psd(data):
     Returns:
         np.ndarray: the mean PSD
     """
-    if "psd [V^2/Hz]" in data:
-        return data["psd [V^2/Hz]"]
-    if "psds [V^2/Hz]" not in data:
+    if "psd" in data:
+        return data["psd"]
+    if "psds" not in data:
         data = calculate_psds(data)
-    data["psd [V^2/Hz]"] = data["psds [V^2/Hz]"].mean(axis=0)
-    return data["psd [V^2/Hz]"]
+    data["psd"] = data["psds"].mean(axis=0)
+    return data["psd"]
 
 def calculate_psds(data):
     """Calculates the PSD of a data set.
@@ -74,11 +74,11 @@ def calculate_psds(data):
     Returns:
         np.ndarray: the PSD
     """
-    frequencies, psds = periodogram(data['voltage_data [V]'], 
+    frequencies, psds = periodogram(data['voltage_data'], 
                                     fs=float(data["sample_rate_real"].split()[0]))
     
-    data["frequencies [Hz]"] = frequencies
-    data["psds [V^2/Hz]"] = psds
+    data["frequencies"] = frequencies
+    data["psds"] = psds
     return data
 
 def flux_noise(noise, transfer_func, sqrt=True):
@@ -87,6 +87,7 @@ def flux_noise(noise, transfer_func, sqrt=True):
         return np.sqrt(noise) / transfer_func
 
     return noise / transfer_func
+
 # def plot(x, y, plot=None, title=None, **kwargs):
 #     """Plots the data x and y.
 
@@ -123,7 +124,7 @@ def flux_noise(noise, transfer_func, sqrt=True):
 #     # plot.setLogMode(x=True, y=True)
 #     plot.showGrid(x=True, y=True)
 #     plot.setLabel('bottom', 'Frequency', units='Hz')
-#     plot.setLabel('left', 'Power Spectral Density', units='V^2/Hz]')
+#     plot.setLabel('left', 'Power Spectral Density', units='V^2\Hz]')
 #     plot.getAxis("left").enableAutoSIPrefix(enable=False)
 #     plot.getAxis("bottom").enableAutoSIPrefix(enable=False)
 #     return plot
