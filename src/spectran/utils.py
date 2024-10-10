@@ -61,11 +61,11 @@ def get_psd(data):
     if "psd [V^2/Hz]" in data:
         return data["psd [V^2/Hz]"]
     if "psds [V^2/Hz]" not in data:
-        data = calculate_psd(data)
+        data = calculate_psds(data)
     data["psd [V^2/Hz]"] = data["psds [V^2/Hz]"].mean(axis=0)
     return data["psd [V^2/Hz]"]
 
-def calculate_psd(data):
+def calculate_psds(data):
     """Calculates the PSD of a data set.
 
     Args:
@@ -74,8 +74,6 @@ def calculate_psd(data):
     Returns:
         np.ndarray: the PSD
     """
-    frequencies, psds = periodogram(data['voltage_data [V]'], 
-                                    fs=float(data["sample_rate_real"].split()[0]))
     frequencies, psds = periodogram(data['voltage_data [V]'], 
                                     fs=float(data["sample_rate_real"].split()[0]))
     
