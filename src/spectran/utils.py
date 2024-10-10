@@ -76,6 +76,8 @@ def calculate_psd(data):
     """
     frequencies, psds = periodogram(data['voltage_data [V]'], 
                                     fs=float(data["sample_rate_real"].split()[0]))
+    frequencies, psds = periodogram(data['voltage_data [V]'], 
+                                    fs=float(data["sample_rate_real"].split()[0]))
     
     data["frequencies [Hz]"] = frequencies
     data["psds [V^2/Hz]"] = psds
