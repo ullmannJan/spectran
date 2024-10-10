@@ -28,7 +28,7 @@ class Plots(pg.GraphicsLayoutWidget):
         # Labels
         self.plot1.setLabel("left", "Amplitude", units="V")
         self.plot1.setLabel("bottom", "Time", units="s")
-        self.plot2.setLabel("left", "PSD (V/√Hz)")
+        self.plot2.setLabel("left", "PSD (V^2/Hz)")
         self.plot2.setLabel("bottom", "Frequency", units="Hz")
         self.plot2.setLogMode(x=True, y=True)
         self.plot2.getAxis("left").enableAutoSIPrefix(enable=False)

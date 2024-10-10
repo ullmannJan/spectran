@@ -189,16 +189,16 @@ class DataHandler():
                                                             save_psds))
                 with h5py.File(self.file_path, "w") as f:
                     if save_time_line:
-                        f.create_dataset("time_seq", 
+                        f.create_dataset("time_seq [s]", 
                                          data=self.time_seq)
-                    f.create_dataset("voltage_data", 
+                    f.create_dataset("voltage_data [V]", 
                                      data=self.voltage_data)
                     if save_psds:
-                        f.create_dataset("frequencies",
+                        f.create_dataset("frequencies [Hz]",
                                          data=self.frequencies)
-                        f.create_dataset("psds", 
+                        f.create_dataset("psds [V^2/Hz]", 
                                          data=self.psds)
-                        f.create_dataset("psd",
+                        f.create_dataset("psd [V^2/Hz]",
                                          data=self.psd)
                     # Add header information as attributes
                     for key, value in self._config.items():
