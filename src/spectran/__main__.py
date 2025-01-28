@@ -3,6 +3,7 @@ import sys
 import logging
 
 def main():
+    # Set up logging
     log_level = sys.argv[1] if len(sys.argv) > 1 else "INFO"
     log_level = getattr(logging, log_level)
     spectran.run(level=log_level)

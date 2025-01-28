@@ -1,3 +1,5 @@
+"""All additional windows of the application are defined here."""
+
 # absolute imports
 from PySide6.QtWidgets import (
     QVBoxLayout,
@@ -192,6 +194,7 @@ class AboutWindow(Window):
         self.layout.addLayout(self.info_layout)
 
 class SettingsWindow(Window):
+    """The settings windows has several registers for different settings each of which are initialized in a separate function."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(title="Settings", *args, **kwargs)

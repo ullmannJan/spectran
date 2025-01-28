@@ -49,8 +49,8 @@ def load_hdf5(file_path: str|Path):
     return data
 
 
-def get_psd(data):
-    """Calculates mean of all PSDs in a data set.
+def get_psd(data:dict) -> np.ndarray:
+    """Calculates mean of all PSDs in a data set and modifies data dict in place.
 
     Args:
         data (dict): The data set to calculate the PSD from.
@@ -65,7 +65,7 @@ def get_psd(data):
     data["psd"] = data["psds"].mean(axis=0)
     return data["psd"]
 
-def calculate_psds(data):
+def calculate_psds(data:dict) -> np.ndarray:
     """Calculates the PSD of a data set.
 
     Args:
@@ -81,7 +81,8 @@ def calculate_psds(data):
     data["psds"] = psds
     return data
 
-def flux_noise(noise, transfer_func, sqrt=True):
+def flux_noise(noise:np.ndarray, transfer_func:float, sqrt=True) -> np.ndarray:
+    """Converts the voltage noise to flux noise (or any other noise depending on the transfer function's units)."""
     
     if sqrt:
         return np.sqrt(noise) / transfer_func

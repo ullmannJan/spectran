@@ -16,6 +16,7 @@ from .windows import AboutWindow, SettingsWindow, SaveWindow
 from . import spectran_path, log
 
 class MainWindow(QMainWindow):
+    """Main window of the PyQt application. This class contains the main layout and the menu bar."""
 
     measurement_stopped = True # The status of the measurement
 
@@ -39,6 +40,7 @@ class MainWindow(QMainWindow):
         self.initUI()
 
     def initUI(self):
+        """helper class to initialize the window layout"""
         self.setWindowTitle("Spectran")
         self.setMinimumSize(800, 600)
         self.setWindowIcon(QIcon(str(spectran_path / "data/osci_128.ico")))
@@ -61,6 +63,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.splitter)
         
     def add_menu_bar(self):
+        """Add the menu bar to the main window."""
     
         # Save
         saveAction = QAction(
@@ -108,18 +111,21 @@ class MainWindow(QMainWindow):
         aboutMenu.addAction(aboutAction)
 
     def update_style(self):
-        log.info("Updating style to {} dark_mode = {}".format(
+        """Update the style of the application."""
+        log.info("Updating style to {}, dark_mode = {}".format(
                 self.settings.value("graphics/style"), self.is_dark_mode()))
         QApplication.setStyle(self.settings.value("graphics/style"))
 
     
     def closeEvent(self, event):
+        """overwritten close event to close all threads and windows"""
         # close all threads
         self.threadpool.clear() # this simply raises an error when closing unexpectedly
         
         QApplication.closeAllWindows()
 
     def raise_error(self, error):
+        """Raise an error message box. This gets automatically called when an exception is raised."""
         if isinstance(error, tuple):
             # when it is raised from a worker thread
             error = error[1]
@@ -132,34 +138,41 @@ class MainWindow(QMainWindow):
                                      Qt.ConnectionType.QueuedConnection, Q_ARG(str, str(error)))
     @Slot(str)
     def show_critical_message(self, error_message):
+        """Show a critical message box."""
         QMessageBox.critical(self, "Error", error_message)
 
     def raise_info(self, error):
+        """Raise an info message box."""
         log.info(str(error).replace("\n", " "))
         QMessageBox.information(self, "Info", str(error))
 
     def open_about_page(self):
+        """Open the about page. An instance of .windows.AboutWindow() is created and shown."""
         self.about_window = AboutWindow(parent=self)
         self.about_window.show()
         self.about_window.activateWindow()
 
     def open_settings_page(self):
+        """Open the settings page. An instance of .windows.SettingsWindow() is created and shown."""
         self.get_bg_color()
         self.about_window = SettingsWindow(parent=self)
         self.about_window.show()
         self.about_window.activateWindow()
 
     def open_save_page(self):
+        """Open the settings page. An instance of .windows.SaveWindow() is created and shown."""
         self.save_window = SaveWindow(parent=self)
         self.save_window.show()
         self.save_window.activateWindow()
 
     def get_bg_color(self):
+        """Get the background color of the application."""
         QApplication.processEvents()
         color = self.palette().color(QPalette.ColorRole.Window)
         return color
     
     def is_dark_mode(self):
+        """Check if the application is in dark mode by looking at background color."""
         app = (
             QApplication.instance()
         )  # Ensures it works with the current QApplication instance

@@ -8,6 +8,8 @@ from .. import log, ureg
 from .daq import DAQ
 
 class NIDAQMX(DAQ):
+    """ National Instruments DAQ using the NIDAQmx driver.
+    """
 
     def list_devices(self) -> list[str]:
         try:

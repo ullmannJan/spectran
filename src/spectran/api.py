@@ -9,9 +9,19 @@ from pathlib import Path
 from . import log, ureg, spectran_path
 from .data_handler import SAVING_MODES
 
+# can be changed in the GUI Settings to something else.
 DEFAULT_API_KEY = "12345678910111213"
 
 class FastAPIServer(QThread):
+    """
+    FastAPIServer is a QThread that runs a FastAPI server to handle various API endpoints for controlling and 
+    interacting with a main application window.
+    Attributes:
+        main_window (QMainWindow): The main application window.
+        api_key (str): The API key for authentication.
+        host (str): The host address for the FastAPI server.
+        port (int): The port number for the FastAPI server.
+    """ 
     
     def __init__(self, main_window, api_key=DEFAULT_API_KEY, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -21,7 +31,8 @@ class FastAPIServer(QThread):
         self.port = self.main_window.settings.value("api/port")
     
     def run(self):
-        
+        """start the FastAPI server.
+        """
         oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
         app = FastAPI()
         
@@ -31,22 +42,27 @@ class FastAPIServer(QThread):
                     status_code=status.HTTP_401_UNAUTHORIZED, 
                     detail="Could not validate credentials"
                 )
-                
+            
+        # API Endpoints        
         @app.get("/ping")
         def ping():
+            """Ping the server to check if it is running."""
             return {"message": "pong"}
         
         @app.get("/favicon.ico")
         @app.get("/osci_128.ico")
         def return_logo():
+            """Return the logo of spectran."""
             return FileResponse(spectran_path / "data/osci_128.ico")
 
         @app.get("/", response_class=HTMLResponse)
         def homepage():
+            """Return the homepage (HTML code) of the API."""
             return FileResponse(spectran_path / "data/api.html")
 
         @app.get("/alive")
         def alive():
+            """Check if the API server is running - same as ping()"""
             return {"message": "API Server Running"}
 
         @app.post("/start_measurement", dependencies=[Depends(api_key_auth)])
@@ -69,6 +85,7 @@ class FastAPIServer(QThread):
             
         @app.post("/config", dependencies=[Depends(api_key_auth)])
         def set_config(config:dict):
+            """Set the configuration of the GUI with the given dictionary."""
 
             def serial_dict_to_config(d):
                 """Convert dictionary with magnitude and unit to pint quantities."""

@@ -1,30 +1,40 @@
 """This module contains functions to run the program."""
 
-from PySide6.QtWidgets import QApplication
-import sys, os, warnings
 import logging
-from .api import FastAPIServer, DEFAULT_API_KEY
-from .main_window import MainWindow
+import os
+import sys
+import warnings
+
+from PySide6.QtWidgets import QApplication
+
 from . import __version__, log
+from .api import DEFAULT_API_KEY, FastAPIServer
+from .main_window import MainWindow
 
 
-def run(level=logging.INFO, format="%(asctime)s  %(levelname)-10s %(name)s: %(message)s", **logging_kwargs):
+def run(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-10s %(name)s: %(message)s",
+    **logging_kwargs,
+):
+    """Run the application. This function sets up the logging and starts the application."""
 
-        
+    # setup logging
     if level is not None:
         logging.basicConfig(
             level=level,
             format=format,
             **logging_kwargs,
         )
-        
-    api_key = os.getenv("API_KEY",DEFAULT_API_KEY)
+
+    api_key = os.getenv("API_KEY", DEFAULT_API_KEY)
     log.info("API_KEY set to {}".format(api_key))
 
     # bug fix for windows where icon is not displayed
     if "win" in sys.platform:
         import ctypes
-        myappid = f'pit.spectran.app.{__version__}' # arbitrary string
+
+        myappid = f"pit.spectran.app.{__version__}"  # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     # This starts the application
@@ -52,7 +62,7 @@ def exception_hook(main_window, exception_type, exception_value: Exception, trac
     main_window.raise_error(exception_value)
     sys.__excepthook__(exception_type, exception_value, traceback)
 
-   
+
 def warning_handler(message, category, filename, lineno, file=None, line=None):
     """
     Custom warning handler.

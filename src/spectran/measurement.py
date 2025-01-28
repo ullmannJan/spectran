@@ -1,10 +1,15 @@
 """This module contains a function to run the measurement. 
 But also the Worker class to run the measurement in a separate thread."""
 
+import sys
+import traceback
+from datetime import datetime
+
+from PySide6.QtCore import QObject, QRunnable, Signal, Slot
+
 from . import log, ureg
 from .daq import DAQ
-from PySide6.QtCore import Signal, Slot, QObject
-from datetime import datetime
+
 
 def run_measurement(driver_instance:DAQ, 
                     config:dict, 
@@ -81,15 +86,9 @@ class WorkerSignals(QObject):
     result = Signal(object)
     progress = Signal(int)
 
-
-from PySide6.QtCore import QRunnable, Slot, Signal, QObject
-
-import sys
-import traceback
-
 class Worker(QRunnable):
     '''
-    Worker thread
+    Worker thread - can run in parallel with the main application.
 
     Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
 

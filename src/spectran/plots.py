@@ -1,8 +1,12 @@
+"""Module for the Plots class, which is a subclass of pg.GraphicsLayoutWidget and contains the plots for the signal and the power spectral density (PSD).
+It also contains all functions associated with plotting."""
+
 import pyqtgraph as pg
 from . import log
 
 
 class Plots(pg.GraphicsLayoutWidget):
+    """PyQt widget that contains the plots for the signal and the power spectral density (PSD)."""
 
     def __init__(self, main_window, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

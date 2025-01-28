@@ -1,3 +1,5 @@
+"""Settings module for the Spectran application."""
+
 from PySide6.QtCore import QSettings
 from . import log, ureg
 

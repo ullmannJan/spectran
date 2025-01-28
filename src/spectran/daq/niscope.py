@@ -8,6 +8,8 @@ from .daq import DAQ
 from .. import log, ureg
 
 class NISCOPE(DAQ):
+    """ National Instruments DAQ using the NIScope driver.
+    """
     
     def list_devices(self) -> list[str]:
         output = []
