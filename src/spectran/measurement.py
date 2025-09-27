@@ -36,8 +36,9 @@ def run_measurement(driver_instance:DAQ,
 
         
         for i in range(averages):
-            # voltage_data = np.empty(int(duration * sample_rate))
-            voltage_data = main_window.data_handler.voltage_data[i]
+            # Get the correct storage index (supports memory optimization)
+            storage_index = main_window.data_handler.get_measurement_storage_index(i)
+            voltage_data = main_window.data_handler.voltage_data[storage_index]
             
             if main_window.measurement_stopped:
                 log.info("Measurement stopped")
@@ -53,6 +54,10 @@ def run_measurement(driver_instance:DAQ,
                 config,
                 main_window,
                 plotting_signal=progress_callback)
+            
+            # Update average voltage data only for optimized mode
+            if hasattr(main_window.data_handler, 'use_memory_optimization') and main_window.data_handler.use_memory_optimization:
+                main_window.data_handler.update_average_voltage_data(i)
     
     except Exception as e:
         main_window.statusBar().showMessage("Measurement failed")
