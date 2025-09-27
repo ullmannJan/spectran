@@ -25,9 +25,25 @@ class DataHandler:
     frequencies = None
     psd = None
     _config = dict()
+    
+    # Memory optimization settings
+    MAX_STORED_MEASUREMENTS = 2  # Can be configured as needed
+    
+    # Average voltage data for optimized mode
+    average_voltage_data = None
 
     def __init__(self, main_window) -> None:
         self.main_window = main_window
+        
+    def set_max_stored_measurements(self, max_stored_measurements):
+        """Configure memory optimization settings.
+        
+        Args:
+            max_stored_measurements (int): Maximum number of measurements to keep in memory.
+                                         Useful for large average counts to save memory.
+        """
+        self.MAX_STORED_MEASUREMENTS = max_stored_measurements
+        log.info("Memory optimization configured: storing max {} measurements".format(max_stored_measurements))
 
     # config setter and getter
     @property
@@ -60,45 +76,104 @@ class DataHandler:
                 return
             else:
                 log.debug("calculate PSD for all averages")
-                n = self.voltage_data.shape[0]
+                # Only set n for traditional mode (optimized mode doesn't need it)
+                if not (hasattr(self, 'use_memory_optimization') and self.use_memory_optimization):
+                    n = self.voltage_data.shape[0]
 
-        # if all have been calculated
-        if n == self.voltage_data.shape[0]:
-            # calculate psds for all averages that have not been calculated at the end
-            undone_idxs = list(
-                set(range(self.voltage_data.shape[0])) - self.done_indices
-            )
-            if not undone_idxs:
-                log.debug("Nothing undone")
-                return self.frequencies, self.psd
-            self.frequencies, self.psds[undone_idxs] = periodogram(
-                self.voltage_data[undone_idxs],
-                fs=self._config["sample_rate"].to(ureg.Hz).magnitude,
-            )
-            self.psd = np.mean(self.psds, axis=0)
-            index = self.psds.shape[0] - 1
-
-            log.debug(
-                "All PSDs calculated ({}/{} at the end)".format(len(undone_idxs), n)
-            )
-
-        else:
-            # calculate the psd for current index
-            if self.main_window.main_ui.plot_spectrum_cb.isChecked():
-                self.frequencies, self.psds[index] = periodogram(
-                    self.voltage_data[index],
+        # Choose calculation method based on optimization setting
+        if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization:
+            # Memory-optimized version: calculate PSD from average voltage data
+            # Can be calculated during or after measurement as long as average voltage is available
+            if self.average_voltage_data is not None:
+                self.frequencies, self.psd = periodogram(
+                    self.average_voltage_data,
                     fs=self._config["sample_rate"].to(ureg.Hz).magnitude,
                 )
-                # calculate the average from previous psd
-                if index is not None:
-                    self.done_indices.add(index)
+                log.debug("PSD calculated from average voltage data (optimized mode, index: {})".format(index))
+            else:
+                log.warning("No average voltage data available for PSD calculation")
+        else:
+            # Traditional version: store all data
+            # if all have been calculated
+            if n == self.voltage_data.shape[0]:
+                # calculate psds for all averages that have not been calculated at the end
+                undone_idxs = list(
+                    set(range(self.voltage_data.shape[0])) - self.done_indices
+                )
+                if not undone_idxs:
+                    log.debug("Nothing undone")
+                    return self.frequencies, self.psd
+                self.frequencies, self.psds[undone_idxs] = periodogram(
+                    self.voltage_data[undone_idxs],
+                    fs=self._config["sample_rate"].to(ureg.Hz).magnitude,
+                )
+                self.psd = np.mean(self.psds, axis=0)
+                index = self.psds.shape[0] - 1
 
-                # iterative average
-                self.psd = self.psd * (n / (n + 1)) + self.psds[index] / (n + 1)
+                log.debug(
+                    "All PSDs calculated ({}/{} at the end)".format(len(undone_idxs), n)
+                )
 
-            log.debug("PSD calculated at index {}".format(index))
+            else:
+                # calculate the psd for current index
+                if self.main_window.main_ui.plot_spectrum_cb.isChecked():
+                    self.frequencies, self.psds[index] = periodogram(
+                        self.voltage_data[index],
+                        fs=self._config["sample_rate"].to(ureg.Hz).magnitude,
+                    )
+                    # calculate the average from previous psd
+                    if index is not None:
+                        self.done_indices.add(index)
+
+                    # iterative average
+                    self.psd = self.psd * (n / (n + 1)) + self.psds[index] / (n + 1)
+
+                log.debug("PSD calculated at index {} (traditional)".format(index))
 
         return self.frequencies, self.psd
+    
+    def get_measurement_storage_index(self, measurement_index):
+        """Get the correct storage index for a measurement based on optimization mode.
+        
+        Args:
+            measurement_index (int): The global measurement index (0 to averages-1)
+            
+        Returns:
+            int: The array index where this measurement should be stored
+        """
+        if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization:
+            # Circular buffer: map measurement index to storage index
+            storage_index = measurement_index % self.voltage_data.shape[0]
+            return storage_index
+        else:
+            # Traditional: direct mapping
+            return measurement_index
+    
+    def update_average_voltage_data(self, measurement_index):
+        """Update the average voltage data for optimized mode.
+        
+        Args:
+            measurement_index (int): The current measurement index (0 to averages-1)
+        """
+        # Early return if not in optimized mode
+        if not (hasattr(self, 'use_memory_optimization') and self.use_memory_optimization):
+            return
+            
+        if self.average_voltage_data is None:
+            log.warning("Average voltage data not initialized")
+            return
+        
+        # Get the storage index where the current measurement is stored
+        storage_index = self.get_measurement_storage_index(measurement_index)
+        current_voltage = self.voltage_data[storage_index]
+        
+        # Update iterative average: new_avg = old_avg * (n-1)/n + new_value/n
+        measurement_count = measurement_index + 1  # measurement_index is 0-based
+        self.average_voltage_data = (self.average_voltage_data * (measurement_count - 1) / measurement_count + 
+                                   current_voltage / measurement_count)
+        
+        log.debug("Updated average voltage data with measurement {} (count: {})".format(
+            measurement_index, measurement_count))
 
     def initialize(self, averages, duration, sample_rate):
         # delete old data
@@ -106,12 +181,40 @@ class DataHandler:
         self.psds = None
         self.psd = None
         self.frequencies = None
+        self.average_voltage_data = None
 
+        # Check if memory optimization is enabled via config
+        use_optimization = self._config.get("optimized_measurement", False)
+        
+        if use_optimization:
+            # For memory optimization: only store limited data
+            # Get max stored measurements from config (set by GUI)
+            config_max_stored = self._config.get("max_stored_measurements", 2)
+            # Update the class variable with the config value
+            self.MAX_STORED_MEASUREMENTS = config_max_stored
+
+            max_stored_measurements = self.MAX_STORED_MEASUREMENTS  # Use configured value without limit
+            log.info("Memory optimization enabled: storing max {} measurements for {} averages"
+                    .format(max_stored_measurements, averages))
+            
+            # Initialize average voltage data for optimized mode
+            self.average_voltage_data = np.zeros((int(duration * sample_rate)))
+            
+        else:
+            # Traditional approach: store all measurements
+            max_stored_measurements = averages
+            log.info("Memory optimization disabled: storing all {} measurements".format(averages))
+        
         # create space for new measurements
-        self.voltage_data = np.empty((averages, int(duration * sample_rate)))
-        self.psds = np.empty(((averages, int(duration * sample_rate) // 2 + 1)))
+        self.voltage_data = np.empty((max_stored_measurements, int(duration * sample_rate)))
+        self.psds = np.empty((max_stored_measurements, int(duration * sample_rate) // 2 + 1))
         self.psd = np.zeros((int(duration * sample_rate) // 2 + 1))
         self.done_indices = set()
+        
+        # Store total number of averages and optimization flag for proper averaging
+        self.total_averages = averages
+        self.current_measurement_index = 0
+        self.use_memory_optimization = use_optimization
 
     def calculate_data(
         self, index: int, ignore_check: bool = True, progress_callback=None
@@ -126,9 +229,15 @@ class DataHandler:
             ignore_check (bool): if True, the psd is calculated regardless of the plotting setting
             progress_callback (Signal): _description_
         """
-        # if there is no data, we dont calculate the psd
-        if self.voltage_data is None:
-            raise ValueError("No data to calculate")
+        # Check if there is data to calculate PSD from
+        if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization:
+            # Optimized mode: check if average voltage data exists
+            if self.average_voltage_data is None:
+                raise ValueError("No average voltage data to calculate PSD from (optimized mode)")
+        else:
+            # Traditional mode: check if voltage data exists
+            if self.voltage_data is None:
+                raise ValueError("No voltage data to calculate PSD from (traditional mode)")
 
         if ignore_check or self.main_window.main_ui.plot_spectrum_cb.isChecked():
             self.calculate_psd(index)
@@ -185,27 +294,56 @@ class DataHandler:
             + f"Signal Range: {self._config['signal_range_min_real']}, {self._config['signal_range_max_real']}\n"
             + f"Averages: {self._config['averages']}\n"
             + f"Unit of Data: {self._config['unit']}\n"
+            + f"Optimized Mode: {self._config.get('optimized_measurement', False)}\n"
         )
 
         match mode:
             case SAVING_MODES.PLAIN_TEXT:
-                np.savetxt(
-                    self.file_path,
-                    self.voltage_data.T,
-                    delimiter="\t",
-                    header=header_text,
-                )
+                # Check if we're in optimized mode
+                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_voltage_data is not None:
+                    # Optimized mode: Save only average voltage data (contains all information)
+                    np.savetxt(
+                        self.file_path,
+                        self.average_voltage_data.reshape(-1, 1),  # Make it 2D for savetxt
+                        delimiter="\t",
+                        header=header_text + "\nAverage Voltage Data (optimized mode - contains average of all {} measurements)".format(self.total_averages),
+                    )
+                else:
+                    # Traditional mode: Save all voltage data
+                    np.savetxt(
+                        self.file_path,
+                        self.voltage_data.T,
+                        delimiter="\t",
+                        header=header_text,
+                    )
 
             case SAVING_MODES.NP_BINARY:
                 self.file_path = self.file_path.with_suffix(".npy")
-                np.save(self.file_path, self.voltage_data)
+                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_voltage_data is not None:
+                    # Optimized mode: Save only average voltage data
+                    np.save(self.file_path, self.average_voltage_data)
+                    header_text += "\nSaved average voltage data (optimized mode - contains average of all {} measurements)\n".format(self.total_averages)
+                else:
+                    # Traditional mode: Save all voltage data
+                    np.save(self.file_path, self.voltage_data)
                 meta_file = str(self.file_path) + ".metadata"
                 with open(meta_file, "w") as f:
                     f.write(header_text)
 
             case SAVING_MODES.NP_COMPRESSED:
                 self.file_path = self.file_path.with_suffix(".npz")
-                np.savez_compressed(self.file_path, voltage_data=self.voltage_data)
+                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_voltage_data is not None:
+                    # Optimized mode: Save average voltage data with metadata
+                    np.savez_compressed(
+                        self.file_path, 
+                        average_voltage_data=self.average_voltage_data,
+                        total_averages=self.total_averages,
+                        optimized_mode=True
+                    )
+                    header_text += "\nSaved average voltage data (optimized mode - contains average of all {} measurements)\n".format(self.total_averages)
+                else:
+                    # Traditional mode: Save all voltage data
+                    np.savez_compressed(self.file_path, voltage_data=self.voltage_data, optimized_mode=False)
                 meta_file = str(self.file_path) + ".metadata"
                 with open(meta_file, "w") as f:
                     f.write(header_text)
@@ -223,6 +361,13 @@ class DataHandler:
                         f["time_seq"].attrs["unit"] = str(ureg.second)
                     f.create_dataset("voltage_data", data=self.voltage_data)
                     f["voltage_data"].attrs["unit"] = str(self._config["unit"])
+                    
+                    # Save average voltage data if available (optimized mode)
+                    if hasattr(self, 'average_voltage_data') and self.average_voltage_data is not None:
+                        f.create_dataset("average_voltage_data", data=self.average_voltage_data)
+                        f["average_voltage_data"].attrs["unit"] = str(self._config["unit"])
+                        f["average_voltage_data"].attrs["description"] = "Average of all measurements (optimized mode)"
+                    
                     if save_psds:
                         f.create_dataset("frequencies", data=self.frequencies)
                         f["frequency"].attrs["unit"] = str(ureg.hertz)
@@ -258,8 +403,19 @@ class DataHandler:
            data is not complete.
 
         Args:
-            index (_type_): _description_
+            index (int): Last valid measurement index
         """
-        if self.voltage_data.shape[0] > index + 1:
-            self.voltage_data = self.voltage_data[:index]
-            self.psds = self.psds[:index]
+        if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization:
+            # With circular buffer, we can't cut data in the traditional sense.
+            # Instead, we update the total_averages count.
+            if hasattr(self, 'total_averages') and index < self.total_averages:
+                self.total_averages = index
+                # Remove indices beyond the cut point
+                self.done_indices = {i for i in self.done_indices if i < index}
+                log.debug("Cut data at index {} (optimized). New total averages: {}".format(index, self.total_averages))
+        else:
+            # Traditional mode: actually cut the arrays
+            if self.voltage_data.shape[0] > index + 1:
+                self.voltage_data = self.voltage_data[:index]
+                self.psds = self.psds[:index]
+                log.debug("Cut data at index {} (traditional)".format(index))
