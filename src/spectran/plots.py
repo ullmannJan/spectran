@@ -62,26 +62,49 @@ class Plots(pg.GraphicsLayoutWidget):
         if self.main_window.main_ui.stop_plotting and index is not None:
             log.debug("Stop plotting at index {}".format(index))
             return
-        if self.main_window.data_handler.voltage_data is None:
-            log.debug("Nothing to plot")
-            return
+        
+        # Check if there is data to plot based on optimization mode
+        data_handler = self.main_window.data_handler
+        if hasattr(data_handler, 'use_memory_optimization') and data_handler.use_memory_optimization:
+            # Optimized mode: check for average voltage data and voltage data
+            if data_handler.average_voltage_data is None and data_handler.voltage_data is None:
+                log.debug("Nothing to plot (optimized mode)")
+                return
+        else:
+            # Traditional mode: check for voltage data
+            if data_handler.voltage_data is None:
+                log.debug("Nothing to plot (traditional mode)")
+                return
         
         if index is None:
             index = -1
         
         if plot_signal:
+            # Choose the right signal data based on optimization mode
+            data_handler = self.main_window.data_handler
+            if hasattr(data_handler, 'use_memory_optimization') and data_handler.use_memory_optimization:
+                # Optimized mode: use average voltage data
+                if data_handler.average_voltage_data is not None:
+                    signal_data = data_handler.average_voltage_data
+                else:
+                    log.debug("No average voltage data available for plotting")
+                    return
+            else:
+                # Traditional mode: use voltage data at index
+                signal_data = data_handler.voltage_data[index,:]
+            
             self.update_signal_plot(
-                self.main_window.data_handler.time_seq, 
-                self.main_window.data_handler.voltage_data[index,:],
+                data_handler.time_seq, 
+                signal_data,
                 force_draw=force_draw
             )
         if plot_spectrum:
-            if (self.main_window.data_handler.psd is not None
-                and self.main_window.data_handler.frequencies is not None):
+            if (data_handler.psd is not None
+                and data_handler.frequencies is not None):
                 self.update_spectrum_plot(
                     # we don't plot the first frequency (0 Hz)
-                    self.main_window.data_handler.frequencies[1:],
-                    self.main_window.data_handler.psd[1:],
+                    data_handler.frequencies[1:],
+                    data_handler.psd[1:],
                     force_draw=force_draw
                 )
 
