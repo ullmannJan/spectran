@@ -31,6 +31,9 @@ class DataHandler:
     
     # Average voltage data for optimized mode
     average_voltage_data = None
+    
+    # Average PSD data for optimized mode (changed from voltage to PSD averaging)
+    average_psd_data = None
 
     def __init__(self, main_window) -> None:
         self.main_window = main_window
@@ -82,16 +85,14 @@ class DataHandler:
 
         # Choose calculation method based on optimization setting
         if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization:
-            # Memory-optimized version: calculate PSD from average voltage data
-            # Can be calculated during or after measurement as long as average voltage is available
-            if self.average_voltage_data is not None:
-                self.frequencies, self.psd = periodogram(
-                    self.average_voltage_data,
-                    fs=self._config["sample_rate"].to(ureg.Hz).magnitude,
-                )
-                log.debug("PSD calculated from average voltage data (optimized mode, index: {})".format(index))
+            # Memory-optimized version: return the averaged PSD directly
+            if self.average_psd_data is not None:
+                self.psd = self.average_psd_data
+                log.debug("PSD returned from averaged PSD data (optimized mode, index: {})".format(index))
+                return self.frequencies, self.psd
             else:
-                log.warning("No average voltage data available for PSD calculation")
+                log.warning("No average PSD data available")
+                return self.frequencies, self.psd
         else:
             # Traditional version: store all data
             # if all have been calculated
@@ -175,6 +176,45 @@ class DataHandler:
         log.debug("Updated average voltage data with measurement {} (count: {})".format(
             measurement_index, measurement_count))
 
+    def update_average_psd_data(self, measurement_index):
+        """Update the average PSD data for optimized mode.
+        
+        Args:
+            measurement_index (int): The current measurement index (0 to averages-1)
+        """
+        # Early return if not in optimized mode
+        if not (hasattr(self, 'use_memory_optimization') and self.use_memory_optimization):
+            return
+            
+        # Get the storage index where the current measurement is stored
+        storage_index = self.get_measurement_storage_index(measurement_index)
+        current_voltage = self.voltage_data[storage_index]
+        
+        # Calculate frequencies only once (they're the same for all measurements)
+        if self.frequencies is None:
+            self.frequencies, _ = periodogram(
+                current_voltage,
+                fs=self._config["sample_rate"].to(ureg.Hz).magnitude,
+            )
+        
+        # Calculate PSD for current measurement (we only need the PSD values, frequencies are already stored)
+        _, current_psd = periodogram(
+            current_voltage,
+            fs=self._config["sample_rate"].to(ureg.Hz).magnitude,
+        )
+        
+        # Initialize average PSD data on first measurement
+        if self.average_psd_data is None:
+            self.average_psd_data = np.zeros_like(current_psd)
+        
+        # Update iterative average: new_avg = old_avg * (n-1)/n + new_value/n
+        measurement_count = measurement_index + 1  # measurement_index is 0-based
+        self.average_psd_data = (self.average_psd_data * (measurement_count - 1) / measurement_count + 
+                               current_psd / measurement_count)
+        
+        log.debug("Updated average PSD data with measurement {} (count: {})".format(
+            measurement_index, measurement_count))
+
     def initialize(self, averages, duration, sample_rate):
         # delete old data
         self.voltage_data = None
@@ -182,6 +222,7 @@ class DataHandler:
         self.psd = None
         self.frequencies = None
         self.average_voltage_data = None
+        self.average_psd_data = None
 
         # Check if memory optimization is enabled via config
         use_optimization = self._config.get("optimized_measurement", False)
@@ -197,8 +238,9 @@ class DataHandler:
             log.info("Memory optimization enabled: storing max {} measurements for {} averages"
                     .format(max_stored_measurements, averages))
             
-            # Initialize average voltage data for optimized mode
+            # Initialize average voltage data for optimized mode (legacy - keep for compatibility)
             self.average_voltage_data = np.zeros((int(duration * sample_rate)))
+            # average_psd_data will be initialized dynamically when first PSD is calculated
             
         else:
             # Traditional approach: store all measurements
@@ -300,13 +342,14 @@ class DataHandler:
         match mode:
             case SAVING_MODES.PLAIN_TEXT:
                 # Check if we're in optimized mode
-                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_voltage_data is not None:
-                    # Optimized mode: Save only average voltage data (contains all information)
+                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_psd_data is not None:
+                    # Optimized mode: Save average PSD data and frequencies
+                    data_to_save = np.column_stack((self.frequencies, self.average_psd_data))
                     np.savetxt(
                         self.file_path,
-                        self.average_voltage_data.reshape(-1, 1),  # Make it 2D for savetxt
+                        data_to_save,
                         delimiter="\t",
-                        header=header_text + "\nAverage Voltage Data (optimized mode - contains average of all {} measurements)".format(self.total_averages),
+                        header=header_text + "\nColumns: Frequency [Hz], Average PSD (optimized mode - contains average of all {} measurements)".format(self.total_averages),
                     )
                 else:
                     # Traditional mode: Save all voltage data
@@ -319,10 +362,11 @@ class DataHandler:
 
             case SAVING_MODES.NP_BINARY:
                 self.file_path = self.file_path.with_suffix(".npy")
-                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_voltage_data is not None:
-                    # Optimized mode: Save only average voltage data
-                    np.save(self.file_path, self.average_voltage_data)
-                    header_text += "\nSaved average voltage data (optimized mode - contains average of all {} measurements)\n".format(self.total_averages)
+                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_psd_data is not None:
+                    # Optimized mode: Save both frequencies and average PSD data
+                    data_to_save = {'frequencies': self.frequencies, 'average_psd': self.average_psd_data}
+                    np.save(self.file_path, data_to_save)
+                    header_text += "\nSaved frequencies and average PSD data (optimized mode - contains average of all {} measurements)\n".format(self.total_averages)
                 else:
                     # Traditional mode: Save all voltage data
                     np.save(self.file_path, self.voltage_data)
@@ -332,15 +376,16 @@ class DataHandler:
 
             case SAVING_MODES.NP_COMPRESSED:
                 self.file_path = self.file_path.with_suffix(".npz")
-                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_voltage_data is not None:
-                    # Optimized mode: Save average voltage data with metadata
+                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_psd_data is not None:
+                    # Optimized mode: Save average PSD data with metadata
                     np.savez_compressed(
                         self.file_path, 
-                        average_voltage_data=self.average_voltage_data,
+                        frequencies=self.frequencies,
+                        average_psd_data=self.average_psd_data,
                         total_averages=self.total_averages,
                         optimized_mode=True
                     )
-                    header_text += "\nSaved average voltage data (optimized mode - contains average of all {} measurements)\n".format(self.total_averages)
+                    header_text += "\nSaved frequencies and average PSD data (optimized mode - contains average of all {} measurements)\n".format(self.total_averages)
                 else:
                     # Traditional mode: Save all voltage data
                     np.savez_compressed(self.file_path, voltage_data=self.voltage_data, optimized_mode=False)
@@ -362,15 +407,15 @@ class DataHandler:
                     f.create_dataset("voltage_data", data=self.voltage_data)
                     f["voltage_data"].attrs["unit"] = str(self._config["unit"])
                     
-                    # Save average voltage data if available (optimized mode)
-                    if hasattr(self, 'average_voltage_data') and self.average_voltage_data is not None:
-                        f.create_dataset("average_voltage_data", data=self.average_voltage_data)
-                        f["average_voltage_data"].attrs["unit"] = str(self._config["unit"])
-                        f["average_voltage_data"].attrs["description"] = "Average of all measurements (optimized mode)"
-                    
+                    # Save average PSD data if available (optimized mode)
+                    if hasattr(self, 'average_psd_data') and self.average_psd_data is not None:
+                        f.create_dataset("average_psd_data", data=self.average_psd_data)
+                        f["average_psd_data"].attrs["unit"] = str(self._config["unit"]) + "^2/Hz"
+                        f["average_psd_data"].attrs["description"] = "Average PSD of all measurements (optimized mode)"
+
                     if save_psds:
                         f.create_dataset("frequencies", data=self.frequencies)
-                        f["frequency"].attrs["unit"] = str(ureg.hertz)
+                        f["frequencies"].attrs["unit"] = str(ureg.hertz)  # typecorrection !! frequencies not frequency
                         f.create_dataset("psds", data=self.psds)
                         f["psds"].attrs["unit"] = str(self._config["unit"]) + "^2/Hz"
                         f.create_dataset("psd", data=self.psd)
