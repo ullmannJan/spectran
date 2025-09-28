@@ -306,7 +306,7 @@ class MainUI(QWidget):
         self.plot_spectrum_button = QPushButton("Calculate PSD && plot")
         self.plot_spectrum_button.clicked.connect(self.calculate_psd_and_plot)
         self.plot_spectrum_button.setToolTip(
-            "Calculate and plot PSD. Works with both traditional and optimized measurement modes."
+            "Calculate and plot PSD. In optimized mode: displays the continuously calculated average PSD. In traditional mode: calculates PSD from all measurements."
         )
         self.plot_layout.addWidget(self.plot_spectrum_button, row, 2)
 
@@ -356,12 +356,16 @@ class MainUI(QWidget):
         self.max_stored_measurements_input.setEnabled(is_enabled)
         
         if is_enabled:
+            # Keep the button enabled - in optimized mode it displays the continuously calculated PSD
+            # self.plot_spectrum_button.setEnabled(False)  # Could disable, but better to keep enabled for user convenience
+
             max_stored = int(self.max_stored_measurements_input.text() or "2")
             log.info("Memory-optimized measurement mode ENABLED - storing max {} measurements".format(max_stored))
             # Apply the setting to data handler
             if hasattr(self.main_window, 'data_handler'):
                 self.main_window.data_handler.set_max_stored_measurements(max_stored)
         else:
+            # self.plot_spectrum_button.setEnabled(True)
             log.info("Memory-optimized measurement mode DISABLED - using traditional mode")
 
     def set_config(self, config: dict):
