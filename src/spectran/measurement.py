@@ -55,9 +55,9 @@ def run_measurement(driver_instance:DAQ,
                 main_window,
                 plotting_signal=progress_callback)
             
-            # Update average voltage data only for optimized mode
+            # Update average PSD data only for optimized mode
             if hasattr(main_window.data_handler, 'use_memory_optimization') and main_window.data_handler.use_memory_optimization:
-                main_window.data_handler.update_average_voltage_data(i)
+                main_window.data_handler.update_average_psd_data(i)
     
     except Exception as e:
         main_window.statusBar().showMessage("Measurement failed")
