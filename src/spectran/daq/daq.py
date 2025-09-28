@@ -139,7 +139,7 @@ class DummyDAQ(DAQ):
         )
         plotting_signal.emit(average_index)
 
-    def acquire(self, duration:float, sample_rate:float) -> np.ndarray:
+    def acquire(self, duration: float, sample_rate: float) -> np.ndarray:
         """A wrapper function to simulate data acquisition.
         You don't need to use such a function in your implementation for real DAQs.
         """
