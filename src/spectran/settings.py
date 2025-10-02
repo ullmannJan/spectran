@@ -11,6 +11,7 @@ DEFAULT_VALUES = {
     "signal_range_min": -5 * ureg.volt, 
     "signal_range_max":  5 * ureg.volt,
     "unit": "Volt",
+    "optimized_measurement": False,  # Memory optimization for large averages
 }
 
 DEFAULT_SETTINGS = {

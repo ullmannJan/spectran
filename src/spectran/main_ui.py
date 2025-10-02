@@ -41,7 +41,7 @@ class MainUI(QWidget):
         self.setLayout(self.layout)
 
         self.add_driver_box()
-
+        self.add_meas_settings_box()
         self.add_settings_box()
 
         self.add_status_box()
@@ -58,6 +58,46 @@ class MainUI(QWidget):
         self.start_button = QPushButton("Start Measurement")
         self.start_button.clicked.connect(self.start_measurement)
         self.layout.addWidget(self.start_button)
+
+    def add_meas_settings_box(self):
+        """Create a box where settings of the measurement can be set."""
+        # Channel Settings
+        meas_set_gbox = QGroupBox("Measurement Settings")
+        self.layout.addWidget(meas_set_gbox)
+
+        self.meas_set_layout = QGridLayout()
+        meas_set_gbox.setLayout(self.meas_set_layout)
+
+        self.meas_set_layout.addWidget(QLabel("Optimized measurement: "), 0, 0)
+        self.optimized_measurement_cb = QCheckBox("Enable")
+        self.input_fields["optimized_measurement"] = self.optimized_measurement_cb
+        self.optimized_measurement_cb.setToolTip(
+            "Enable memory-optimized measurement for large average counts.\n"
+            "Only stores the last few measurements to save memory and computing resources."
+        )
+        self.optimized_measurement_cb.setChecked(False)  # Default: disabled
+        self.optimized_measurement_cb.stateChanged.connect(self.on_optimized_measurement_changed)
+        self.meas_set_layout.addWidget(self.optimized_measurement_cb, 0, 1)
+        
+        # Add input field for max stored measurements (next to checkbox)
+        self.max_stored_label = QLabel("Max stored:")
+        self.max_stored_label.setToolTip("Maximum number of measurements to keep in memory")
+        self.meas_set_layout.addWidget(self.max_stored_label, 0, 2)
+        
+        self.max_stored_measurements_input = QLineEdit("2")
+        self.max_stored_measurements_input.setToolTip("Number of measurements to store in memory (default: 2)")
+        self.max_stored_measurements_input.setMaximumWidth(50)
+        # Only allow positive numbers
+        validator = QRegularExpressionValidator(r"^[1-9]\d*$")
+        self.max_stored_measurements_input.setValidator(validator)
+        self.input_fields["max_stored_measurements"] = self.max_stored_measurements_input
+        self.meas_set_layout.addWidget(self.max_stored_measurements_input, 0, 3)
+        
+        # Initially disable the input field (enabled when checkbox is checked)
+        self.max_stored_label.setEnabled(False)
+        self.max_stored_measurements_input.setEnabled(False)
+
+
 
     def add_driver_box(self):
         """Create a box where a driver and device can be selected."""
@@ -265,6 +305,9 @@ class MainUI(QWidget):
         self.plot_layout.addWidget(self.plot_spectrum_cb, row, 1)
         self.plot_spectrum_button = QPushButton("Calculate PSD && plot")
         self.plot_spectrum_button.clicked.connect(self.calculate_psd_and_plot)
+        self.plot_spectrum_button.setToolTip(
+            "Calculate and plot PSD. In optimized mode: displays the continuously calculated average PSD. In traditional mode: calculates PSD from all measurements."
+        )
         self.plot_layout.addWidget(self.plot_spectrum_button, row, 2)
 
     def calculate_psd_and_plot(self):
@@ -284,13 +327,46 @@ class MainUI(QWidget):
 
     def plot_signal(self):
         """Plot the latest measured signal. Function that is called by pressing button 'Plot Signal'."""
-        if self.main_window.data_handler.voltage_data is None:
-            self.main_window.raise_error("No data to plot")
-            return
+        data_handler = self.main_window.data_handler
+        
+        # Check if we're in optimized mode
+        if hasattr(data_handler, 'use_memory_optimization') and data_handler.use_memory_optimization:
+            # Optimized mode: plot average voltage data
+            if data_handler.average_voltage_data is None:
+                self.main_window.raise_error("No average voltage data to plot (optimized mode)")
+                return
+            t = data_handler.time_seq
+            v = data_handler.average_voltage_data
+        else:
+            # Traditional mode: plot latest measurement
+            if data_handler.voltage_data is None:
+                self.main_window.raise_error("No data to plot (traditional mode)")
+                return
+            t = data_handler.time_seq
+            v = data_handler.voltage_data[-1]
 
-        t = self.main_window.data_handler.time_seq
-        v = self.main_window.data_handler.voltage_data[-1]
         self.main_window.plots.update_signal_plot(t, v, force_draw=True)
+
+    def on_optimized_measurement_changed(self, state):
+        """Handle changes to the optimized measurement checkbox."""
+        is_enabled = self.optimized_measurement_cb.isChecked()
+        
+        # Enable/disable the max stored measurements input
+        self.max_stored_label.setEnabled(is_enabled)
+        self.max_stored_measurements_input.setEnabled(is_enabled)
+        
+        if is_enabled:
+            # Keep the button enabled - in optimized mode it displays the continuously calculated PSD
+            # self.plot_spectrum_button.setEnabled(False)  # Could disable, but better to keep enabled for user convenience
+
+            max_stored = int(self.max_stored_measurements_input.text() or "2")
+            log.info("Memory-optimized measurement mode ENABLED - storing max {} measurements".format(max_stored))
+            # Apply the setting to data handler
+            if hasattr(self.main_window, 'data_handler'):
+                self.main_window.data_handler.set_max_stored_measurements(max_stored)
+        else:
+            # self.plot_spectrum_button.setEnabled(True)
+            log.info("Memory-optimized measurement mode DISABLED - using traditional mode")
 
     def set_config(self, config: dict):
         """Set the configuration dictionary to the UI
@@ -345,6 +421,15 @@ class MainUI(QWidget):
         if self.driver_instance.connected_device is not None:
             output["device"] = self.driver_instance.connected_device
         output["terminal_config"] = self.terminal_mode_dd.currentData()
+        
+        # Add optimized measurement setting
+        output["optimized_measurement"] = self.optimized_measurement_cb.isChecked()
+        
+        # Add max stored measurements setting
+        if self.max_stored_measurements_input.text():
+            output["max_stored_measurements"] = int(self.max_stored_measurements_input.text())
+        else:
+            output["max_stored_measurements"] = 2  # Default value
 
         return output
 
