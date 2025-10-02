@@ -21,7 +21,7 @@ class DAQ(ABC):
         The name of the currently connected device.
     """
 
-    connected_device: str = None
+    connected_device: str|None = None
 
     @abstractmethod
     def list_devices(self) -> list[str]:
@@ -40,7 +40,7 @@ class DAQ(ABC):
         """
 
     @abstractmethod
-    def list_term_configs(self) -> tuple[Enum, int]:
+    def list_term_configs(self) -> tuple[type[Enum], Enum]:
         """List of Terminal configurations and the default element"""
 
     def connect_device(self, resource_name):
@@ -64,7 +64,7 @@ class DAQ(ABC):
         config: dict,
         main_window,
         plotting_signal: Signal,
-    ) -> np.ndarray:
+    ):
         """Get data from DAQ device
 
         Args:
@@ -139,7 +139,7 @@ class DummyDAQ(DAQ):
         )
         plotting_signal.emit(average_index)
 
-    def acquire(self, duration: float, sample_rate: float) -> np.ndarray:
+    def acquire(self, duration:float, sample_rate:float) -> np.ndarray:
         """A wrapper function to simulate data acquisition.
         You don't need to use such a function in your implementation for real DAQs.
         """

@@ -18,36 +18,28 @@ class DataHandler:
     all variables that need to be shared between the different classes.
     """
 
-    voltage_data = None
+    voltage_data:np.ndarray|None = None
     # set of indices where PSD has been calculated
     done_indices: set = set()  
-    time_seq = None
-    frequencies = None
-    psd = None
-    _config = dict()
+    time_seq:np.ndarray|None = None
+    frequencies:np.ndarray|None = None
+    psd:np.ndarray|None = None
+    _config:dict = dict()
+    use_memory_optimization:bool = False
+
     
     # Memory optimization settings
-    MAX_STORED_MEASUREMENTS = 2  # Can be configured as needed
+    MAX_STORED_MEASUREMENTS:int = 2  # Can be configured as needed
     
     # Average voltage data for optimized mode
-    average_voltage_data = None
+    average_voltage_data:np.ndarray|None = None
     
     # Average PSD data for optimized mode (changed from voltage to PSD averaging)
-    average_psd_data = None
+    average_psd_data:np.ndarray|None = None
 
     def __init__(self, main_window) -> None:
         self.main_window = main_window
         
-    def set_max_stored_measurements(self, max_stored_measurements):
-        """Configure memory optimization settings.
-        
-        Args:
-            max_stored_measurements (int): Maximum number of measurements to keep in memory.
-                                         Useful for large average counts to save memory.
-        """
-        self.MAX_STORED_MEASUREMENTS = max_stored_measurements
-        log.info("Memory optimization configured: storing max {} measurements".format(max_stored_measurements))
-
     # config setter and getter
     @property
     def config(self):
@@ -67,6 +59,17 @@ class DataHandler:
             ),
         )
 
+    def set_max_stored_measurements(self, max_stored_measurements):
+        """Configure memory optimization settings.
+        
+        Args:
+            max_stored_measurements (int): Maximum number of measurements to keep in memory.
+                                         Useful for large average counts to save memory.
+        """
+        self.MAX_STORED_MEASUREMENTS = max_stored_measurements
+        log.info("Memory optimization configured: storing max {} measurement iterations".format(max_stored_measurements))
+
+
     def calculate_psd(self, index):
         # if index is None, calculate the psd for all averages
         # but only if the psd has not been calculated yet
@@ -80,11 +83,11 @@ class DataHandler:
             else:
                 log.debug("calculate PSD for all averages")
                 # Only set n for traditional mode (optimized mode doesn't need it)
-                if not (hasattr(self, 'use_memory_optimization') and self.use_memory_optimization):
+                if not self.use_memory_optimization:
                     n = self.voltage_data.shape[0]
 
         # Choose calculation method based on optimization setting
-        if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization:
+        if self.use_memory_optimization:
             # Memory-optimized version: return the averaged PSD directly
             if self.average_psd_data is not None:
                 self.psd = self.average_psd_data
@@ -157,7 +160,7 @@ class DataHandler:
             measurement_index (int): The current measurement index (0 to averages-1)
         """
         # Early return if not in optimized mode
-        if not (hasattr(self, 'use_memory_optimization') and self.use_memory_optimization):
+        if not self.use_memory_optimization:
             return
             
         if self.average_voltage_data is None:
@@ -183,7 +186,7 @@ class DataHandler:
             measurement_index (int): The current measurement index (0 to averages-1)
         """
         # Early return if not in optimized mode
-        if not (hasattr(self, 'use_memory_optimization') and self.use_memory_optimization):
+        if not self.use_memory_optimization:
             return
             
         # Get the storage index where the current measurement is stored
@@ -224,10 +227,10 @@ class DataHandler:
         self.average_voltage_data = None
         self.average_psd_data = None
 
+        self.use_memory_optimization = self._config.get("optimized_measurement", False)
+
         # Check if memory optimization is enabled via config
-        use_optimization = self._config.get("optimized_measurement", False)
-        
-        if use_optimization:
+        if self.use_memory_optimization:
             # For memory optimization: only store limited data
             # Get max stored measurements from config (set by GUI)
             config_max_stored = self._config.get("max_stored_measurements", 2)
@@ -256,7 +259,6 @@ class DataHandler:
         # Store total number of averages and optimization flag for proper averaging
         self.total_averages = averages
         self.current_measurement_index = 0
-        self.use_memory_optimization = use_optimization
 
     def calculate_data(
         self, index: int, ignore_check: bool = True, progress_callback=None
@@ -272,7 +274,7 @@ class DataHandler:
             progress_callback (Signal): _description_
         """
         # Check if there is data to calculate PSD from
-        if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization:
+        if self.use_memory_optimization:
             # Optimized mode: check if average voltage data exists
             if self.average_voltage_data is None:
                 raise ValueError("No average voltage data to calculate PSD from (optimized mode)")
@@ -342,7 +344,7 @@ class DataHandler:
         match mode:
             case SAVING_MODES.PLAIN_TEXT:
                 # Check if we're in optimized mode
-                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_psd_data is not None:
+                if self.use_memory_optimization and self.average_psd_data is not None:
                     # Optimized mode: Save average PSD data and frequencies
                     data_to_save = np.column_stack((self.frequencies, self.average_psd_data))
                     np.savetxt(
@@ -362,7 +364,7 @@ class DataHandler:
 
             case SAVING_MODES.NP_BINARY:
                 self.file_path = self.file_path.with_suffix(".npy")
-                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_psd_data is not None:
+                if self.use_memory_optimization and self.average_psd_data is not None:
                     # Optimized mode: Save both frequencies and average PSD data
                     data_to_save = {'frequencies': self.frequencies, 'average_psd': self.average_psd_data}
                     np.save(self.file_path, data_to_save)
@@ -376,7 +378,7 @@ class DataHandler:
 
             case SAVING_MODES.NP_COMPRESSED:
                 self.file_path = self.file_path.with_suffix(".npz")
-                if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization and self.average_psd_data is not None:
+                if self.use_memory_optimization and self.average_psd_data is not None:
                     # Optimized mode: Save average PSD data with metadata
                     np.savez_compressed(
                         self.file_path, 
@@ -450,7 +452,7 @@ class DataHandler:
         Args:
             index (int): Last valid measurement index
         """
-        if hasattr(self, 'use_memory_optimization') and self.use_memory_optimization:
+        if self.use_memory_optimization:
             # With circular buffer, we can't cut data in the traditional sense.
             # Instead, we update the total_averages count.
             if hasattr(self, 'total_averages') and index < self.total_averages:

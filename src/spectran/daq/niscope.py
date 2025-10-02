@@ -44,7 +44,7 @@ class NISCOPE(DAQ):
                      average_index: int,
                      config:dict,
                      main_window,
-                     plotting_signal:Signal = None) -> np.ndarray:
+                     plotting_signal:Signal = None):
         
         # configuration
         duration = config["duration"].to(ureg.second).magnitude

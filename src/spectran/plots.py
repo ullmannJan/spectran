@@ -65,7 +65,7 @@ class Plots(pg.GraphicsLayoutWidget):
         
         # Check if there is data to plot based on optimization mode
         data_handler = self.main_window.data_handler
-        if hasattr(data_handler, 'use_memory_optimization') and data_handler.use_memory_optimization:
+        if data_handler.use_memory_optimization:
             # Optimized mode: check for average voltage data and voltage data
             if data_handler.average_voltage_data is None and data_handler.voltage_data is None:
                 log.debug("Nothing to plot (optimized mode)")
@@ -82,7 +82,7 @@ class Plots(pg.GraphicsLayoutWidget):
         if plot_signal:
             # Choose the right signal data based on optimization mode
             data_handler = self.main_window.data_handler
-            if hasattr(data_handler, 'use_memory_optimization') and data_handler.use_memory_optimization:
+            if data_handler.use_memory_optimization:
                 # Optimized mode: use average voltage data
                 if data_handler.average_voltage_data is not None:
                     signal_data = data_handler.average_voltage_data

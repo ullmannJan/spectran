@@ -56,7 +56,7 @@ def run_measurement(driver_instance:DAQ,
                 plotting_signal=progress_callback)
             
             # Update average PSD data only for optimized mode
-            if hasattr(main_window.data_handler, 'use_memory_optimization') and main_window.data_handler.use_memory_optimization:
+            if main_window.data_handler.use_memory_optimization:
                 main_window.data_handler.update_average_psd_data(i)
     
     except Exception as e:

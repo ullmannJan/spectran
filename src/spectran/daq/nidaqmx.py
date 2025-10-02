@@ -50,7 +50,7 @@ class NIDAQMX(DAQ):
                      average_index: int, 
                      config: dict, 
                      main_window,
-                     plotting_signal) -> np.ndarray:
+                     plotting_signal):
         
         duration = config["duration"].to(ureg.second).magnitude
         sample_rate = config["sample_rate"].to(ureg.Hz).magnitude
